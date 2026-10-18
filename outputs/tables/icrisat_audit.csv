@@ -1,0 +1,27 @@
+district,dist_code,rows_raw,rows_zero_area,years_grown,years_ge_threshold,mean_area_kha,first_year,last_year,subdivision,selected,rows_kept,rows_dropped,drop_reason
+Akola,114,18,0,18,18,325.4,2000,2017,VIDARBHA,True,18,0,none
+Amarawati,115,18,0,18,18,267.71111111111105,2000,2017,VIDARBHA,True,18,0,none
+Osmanabad,112,18,0,18,16,266.7055555555555,2000,2017,MATATHWADA,True,18,0,none
+Nagpur,118,18,0,18,18,230.36111111111111,2000,2017,VIDARBHA,True,18,0,none
+Parbhani,109,18,0,18,18,226.68333333333334,2000,2017,MATATHWADA,True,18,0,none
+Buldhana,113,18,0,18,18,219.55555555555554,2000,2017,VIDARBHA,True,18,0,none
+Yeotmal,116,18,0,18,18,217.78333333333336,2000,2017,VIDARBHA,True,18,0,none
+Wardha,117,18,0,18,18,172.59444444444443,2000,2017,VIDARBHA,True,18,0,none
+Nanded,111,18,0,18,17,162.2888888888889,2000,2017,MATATHWADA,True,18,0,none
+Chandrapur,120,18,0,18,18,143.50555555555556,2000,2017,VIDARBHA,True,18,0,none
+Beed,110,18,0,18,15,70.59444444444445,2000,2017,MATATHWADA,True,18,0,none
+Sangli,105,18,0,18,18,58.8111111111111,2000,2017,MADHYA MAHARASHTRA,True,18,0,none
+Kolhapur,107,18,0,18,18,58.25555555555555,2000,2017,MADHYA MAHARASHTRA,True,18,0,none
+Aurangabad,108,18,0,18,14,61.53888888888889,2000,2017,MATATHWADA,False,0,18,district fails rule (14 yrs with area>=20k ha < 15): all 18 rows
+Ahmednagar,102,18,0,18,14,43.39333333333333,2000,2017,MADHYA MAHARASHTRA,False,0,18,district fails rule (14 yrs with area>=20k ha < 15): all 18 rows
+Nasik,99,18,0,18,14,39.733333333333334,2000,2017,MADHYA MAHARASHTRA,False,0,18,district fails rule (14 yrs with area>=20k ha < 15): all 18 rows
+Satara,104,18,0,18,14,36.57222222222222,2000,2017,MADHYA MAHARASHTRA,False,0,18,district fails rule (14 yrs with area>=20k ha < 15): all 18 rows
+Dhule,100,18,0,18,11,28.429444444444446,2000,2017,MADHYA MAHARASHTRA,False,0,18,district fails rule (11 yrs with area>=20k ha < 15): all 18 rows
+Jalgaon,101,18,0,18,6,17.15222222222222,2000,2017,MADHYA MAHARASHTRA,False,0,18,district fails rule (6 yrs with area>=20k ha < 15): all 18 rows
+Bhandara,119,18,0,18,0,8.133333333333335,2000,2017,VIDARBHA,False,0,18,district fails rule (0 yrs with area>=20k ha < 15): all 18 rows
+Solapur,106,18,0,18,2,6.571666666666666,2000,2017,MADHYA MAHARASHTRA,False,0,18,district fails rule (2 yrs with area>=20k ha < 15): all 18 rows
+Pune,103,18,0,18,1,5.279444444444445,2000,2017,MADHYA MAHARASHTRA,False,0,18,district fails rule (1 yrs with area>=20k ha < 15): all 18 rows
+Bombay,95,14,14,0,0,,2000,2016,KONKAN & GOA,False,0,14,district fails rule (0 yrs with area>=20k ha < 15): all 14 rows; only 14 years in raw file
+Raigad,97,18,18,0,0,,2000,2017,KONKAN & GOA,False,0,18,district fails rule (0 yrs with area>=20k ha < 15): all 18 rows
+Ratnagiri,98,18,18,0,0,,2000,2017,KONKAN & GOA,False,0,18,district fails rule (0 yrs with area>=20k ha < 15): all 18 rows
+Thane,96,18,18,0,0,,2000,2017,KONKAN & GOA,False,0,18,district fails rule (0 yrs with area>=20k ha < 15): all 18 rows

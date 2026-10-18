@@ -1,4 +1,4 @@
-# Python
+# ---- Python ----
 __pycache__/
 *.py[cod]
 .venv/
@@ -6,29 +6,44 @@ venv/
 .env
 .ipynb_checkpoints/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
 
-# macOS / editor
+# ---- macOS / Windows / editors ----
 .DS_Store
+Thumbs.db
 .vscode/
 .idea/
+*.swp
+*~
 
-# Large gridded downloads (keep the folder, ignore the contents)
+# ---- Large gridded downloads (keep the folder, ignore contents) ----
 data/raw/grids/*
 !data/raw/grids/.gitkeep
-
-# Gridded file types, wherever they end up
 *.nc
+*.nc4
 *.grd
 *.tif
+*.tiff
 *.zip
 
-# Credentials (Copernicus CDS key etc.)
+# Boundary files: commit only if small (< ~50 MB); otherwise uncomment
+# data/raw/boundaries/*
+# !data/raw/boundaries/.gitkeep
+
+# ---- Credentials (Copernicus CDS key etc.) ----
 .cdsapirc
 *.key
 
-# LaTeX build files (only if you write the report in LaTeX)
-*.aux
-*.log
-*.out
-*.toc
-*.synctex.gz
+# ---- Report build files ----
+# LaTeX (log rule scoped to report/ so outputs/logs is never hidden)
+report/**/*.aux
+report/**/*.log
+report/**/*.out
+report/**/*.toc
+report/**/*.synctex.gz
+report/**/*.fls
+report/**/*.fdb_latexmk
+# Word/Office lock files
+~$*

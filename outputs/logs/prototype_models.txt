@@ -1,0 +1,103 @@
+========================================================================================
+PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.
+========================================================================================
+Panel: 208 obs = 13 districts x 16 years (2000-2015); outcome ln_yield; rainfall in mm
+Independent rainfall series: 3 subdivisions; year clusters: 16. Cluster-robust SEs with 16 clusters are unreliable; treat as indicative.
+Estimator: linearmodels PanelOLS, entity (district) effects + linear trend (year - 2000), SEs clustered by year.
+
+Mean rainfall per subdivision used as Rbar (mm):
+                    R_season  R_early  R_late
+subdivision                                  
+MADHYA MAHARASHTRA     801.4    411.3   390.1
+MATATHWADA             622.1    291.3   330.8
+VIDARBHA               960.9    507.3   453.6
+
+----------------------------------------------------------------------------------------
+MODEL: linear   regressors: trend, R_season
+----------------------------------------------------------------------------------------
+               coef  se_cluster_year        t          p
+trend    -0.0336363        0.0147468 -2.28092  0.0236454
+R_season 0.00104026      0.000346639    3.001 0.00304638
+within R-squared = 0.2364   N = 208   entities = 13
+Linear check: exp(-100 * b1) - 1 = -0.098798
+
+----------------------------------------------------------------------------------------
+MODEL: quadratic   regressors: trend, R_season, R_season_sq
+----------------------------------------------------------------------------------------
+                    coef  se_cluster_year        t         p
+trend         -0.0277463        0.0145913 -1.90156 0.0587262
+R_season      0.00355553        0.0016429  2.16418 0.0316849
+R_season_sq -1.40047e-06      9.10855e-07 -1.53754  0.125809
+within R-squared = 0.2618   N = 208   entities = 13
+Joint test of squared terms (R_season_sq = 0), clustered covariance: Wald chi2(1) = 2.3640, p = 0.1242; F = Wald/q = 2.3640
+  R_season: turning point -b1/(2 b2) = 1269.4 mm (maximum); observed range 398.8-1360.0 mm
+
+----------------------------------------------------------------------------------------
+MODEL: timing_linear   regressors: trend, R_early, R_late
+----------------------------------------------------------------------------------------
+               coef  se_cluster_year        t         p
+trend    -0.0334075        0.0144925 -2.30516 0.0222265
+R_early  0.00107679      0.000453248  2.37572 0.0184993
+R_late  0.000981665      0.000472058  2.07954 0.0388957
+within R-squared = 0.2365   N = 208   entities = 13
+
+----------------------------------------------------------------------------------------
+MODEL: timing_quad   regressors: trend, R_early, R_early_sq, R_late, R_late_sq
+----------------------------------------------------------------------------------------
+                   coef  se_cluster_year        t           p
+trend        -0.0226107        0.0142878 -1.58252    0.115193
+R_early      0.00624232      0.000947534  6.58796 4.26279e-10
+R_early_sq -4.82723e-06      7.64434e-07 -6.31477    1.87e-09
+R_late      -0.00504091       0.00409614 -1.23065    0.219976
+R_late_sq   6.65928e-06      4.79992e-06  1.38737    0.166953
+within R-squared = 0.3758   N = 208   entities = 13
+Joint test of squared terms (R_early_sq, R_late_sq = 0), clustered covariance: Wald chi2(2) = 47.4141, p = 0.0000; F = Wald/q = 23.7071
+  R_early: turning point -b1/(2 b2) = 646.6 mm (maximum); observed range 135.4-902.2 mm
+  R_late: turning point -b1/(2 b2) = 378.5 mm (minimum); observed range 213.8-638.7 mm
+
+========================================================================================
+BOOTSTRAP: 1000 reps, resampling 16 years with replacement, seed 28. Failed fits per model: {'linear': 0, 'quadratic': 0, 'timing_linear': 0, 'timing_quad': 0}
+========================================================================================
+Coefficient SEs: clustered by year vs bootstrap over years
+        model        term         coef  se_cluster_year  se_boot_years           p  within_r2
+       linear       trend   -0.0336363        0.0147468       0.016742   0.0236454   0.236353
+       linear    R_season   0.00104026      0.000346639    0.000419706  0.00304638   0.236353
+    quadratic       trend   -0.0277463        0.0145913      0.0164461   0.0587262   0.261782
+    quadratic    R_season   0.00355553        0.0016429      0.0020283   0.0316849   0.261782
+    quadratic R_season_sq -1.40047e-06      9.10855e-07     1.1627e-06    0.125809   0.261782
+timing_linear       trend   -0.0334075        0.0144925      0.0176463   0.0222265   0.236513
+timing_linear     R_early   0.00107679      0.000453248    0.000672934   0.0184993   0.236513
+timing_linear      R_late  0.000981665      0.000472058    0.000562697   0.0388957   0.236513
+  timing_quad       trend   -0.0226107        0.0142878      0.0168806    0.115193    0.37576
+  timing_quad     R_early   0.00624232      0.000947534     0.00153994 4.26279e-10    0.37576
+  timing_quad  R_early_sq -4.82723e-06      7.64434e-07    1.78427e-06    1.87e-09    0.37576
+  timing_quad      R_late  -0.00504091       0.00409614     0.00484794    0.219976    0.37576
+  timing_quad   R_late_sq  6.65928e-06      4.79992e-06    5.85891e-06    0.166953    0.37576
+
+100 mm DEFICIT EXPERIMENT: percent change in yield = exp(f(Rbar-100) - f(Rbar)) - 1,
+at each subdivision's mean rainfall. For timing models the deficit is applied to one window at a time.
+Shown in percent (the CSV stores proportions: -0.05 = -5%). 95% percentile bootstrap interval over years.
+        model        subdivision shocked_window Rbar_mm pct_change boot_lo_2.5 boot_hi_97.5 boot_median  boot_valid_reps
+       linear MADHYA MAHARASHTRA       R_season   801.4     -9.88%     -16.36%       -0.93%      -9.77%             1000
+       linear         MATATHWADA       R_season   622.1     -9.88%     -16.36%       -0.93%      -9.77%             1000
+       linear           VIDARBHA       R_season   960.9     -9.88%     -16.36%       -0.93%      -9.77%             1000
+    quadratic MADHYA MAHARASHTRA       R_season   801.4    -13.50%     -20.14%       -4.18%     -13.09%             1000
+    quadratic         MATATHWADA       R_season   622.1    -17.74%     -27.10%       -1.26%     -16.93%             1000
+    quadratic           VIDARBHA       R_season   960.9     -9.55%     -16.43%       -1.51%      -9.60%             1000
+timing_linear MADHYA MAHARASHTRA        R_early   411.3    -10.21%     -24.04%       +0.56%     -10.66%             1000
+timing_linear MADHYA MAHARASHTRA         R_late   390.1     -9.35%     -18.76%       +1.67%      -7.60%             1000
+timing_linear         MATATHWADA        R_early   291.3    -10.21%     -24.04%       +0.56%     -10.66%             1000
+timing_linear         MATATHWADA         R_late   330.8     -9.35%     -18.76%       +1.67%      -7.60%             1000
+timing_linear           VIDARBHA        R_early   507.3    -10.21%     -24.04%       +0.56%     -10.66%             1000
+timing_linear           VIDARBHA         R_late   453.6     -9.35%     -18.76%       +1.67%      -7.60%             1000
+  timing_quad MADHYA MAHARASHTRA        R_early   411.3    -24.07%     -30.55%      -13.60%     -23.66%             1000
+  timing_quad MADHYA MAHARASHTRA         R_late   390.1     +5.24%     -13.45%      +29.43%      +6.68%             1000
+  timing_quad         MATATHWADA        R_early   291.3    -32.38%     -42.16%      -20.12%     -32.96%             1000
+  timing_quad         MATATHWADA         R_late   330.8    +13.90%     -14.34%      +62.50%     +17.24%             1000
+  timing_quad           VIDARBHA        R_early   507.3    -16.70%     -22.72%       -3.91%     -15.72%             1000
+  timing_quad           VIDARBHA         R_late   453.6     -3.28%     -15.81%      +10.00%      -3.42%             1000
+
+Caveats: rainfall is subdivision-level (3 independent series), so effective rainfall variation is far
+smaller than N suggests; 16 year-clusters are too few for reliable cluster-robust inference; no
+temperature control. Results are associations under the model's assumptions, not causal effects.
+PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.
