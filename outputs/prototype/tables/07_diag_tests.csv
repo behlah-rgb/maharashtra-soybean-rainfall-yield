@@ -1,0 +1,16 @@
+# PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.
+model,test,stat,p,note
+linear,Breusch-Pagan (resid^2 on trend + rainfall terms),19.186720337751026,6.817994016382673e-05,LM; F version = 10.416 (p = 0.0000)
+linear,Brown-Forsythe equal variance across districts,1.5903356009706067,0.09687615103988366,13 groups
+linear,Brown-Forsythe equal variance across years,2.5242925293215346,0.0019507761304844544,16 groups
+linear,Jarque-Bera normality,7.562282812247631,0.02279665632647549,"skew = -0.446, kurtosis = 3.277"
+linear,Wooldridge AR(1) serial correlation (H0: none),14.562757973870141,0.0024567515195995926,"F(1,12); coef on lagged FD resid = -0.185 (-0.5 under H0), district-clustered SE 0.083"
+linear,AR(1) corr of within residuals (descriptive),0.3597448771552713,,"biased towards -1/(T-1) under no autocorrelation (small T), so a positive value understates it"
+linear,Pesaran CD cross-sectional dependence (H0: none),12.826767610728906,1.1610802775348357e-37,"mean pairwise rho = 0.363, mean |rho| = 0.444"
+quadratic,Breusch-Pagan (resid^2 on trend + rainfall terms),18.81394908304136,0.0002987148897800544,LM; F version = 6.762 (p = 0.0002)
+quadratic,Brown-Forsythe equal variance across districts,1.4966502880473767,0.1278912575573143,13 groups
+quadratic,Brown-Forsythe equal variance across years,1.9316952149556774,0.022311875532291827,16 groups
+quadratic,Jarque-Bera normality,7.898085118326839,0.019273145841304847,"skew = -0.385, kurtosis = 3.565"
+quadratic,Wooldridge AR(1) serial correlation (H0: none),13.734248530381805,0.003002809696606977,"F(1,12); coef on lagged FD resid = -0.200 (-0.5 under H0), district-clustered SE 0.081"
+quadratic,AR(1) corr of within residuals (descriptive),0.36732749225002603,,"biased towards -1/(T-1) under no autocorrelation (small T), so a positive value understates it"
+quadratic,Pesaran CD cross-sectional dependence (H0: none),13.194714887017824,9.411025748139026e-40,"mean pairwise rho = 0.374, mean |rho| = 0.455"

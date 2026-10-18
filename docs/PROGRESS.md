@@ -54,3 +54,51 @@ Format for each entry:
 - Why: the old global `*.log` rule could hide model logs in outputs/; it is now limited to report/. The empty folders were not tracked, so a fresh clone lacked them. Added cache, editor and Office-lock rules. data/raw, data/processed, data/interim and outputs stay tracked (all small) so results are visible without rerunning.
 - Result: check-ignore confirms .venv, *.nc, __pycache__ and report/*.log are ignored, and outputs/logs/prototype_models.txt is not. git status shows no .DS_Store, __pycache__ or .venv entries.
 - Problems / deviations: none.
+
+## 2026-10-18 - team-lead decisions recorded; packages installed
+- Done: added "Amendments 2026-10-18" (A1-A6) to SPEC.md, mirrored in notes.md. Installed xarray, netCDF4, geopandas, shapely into .venv, pinned them, and tested imports (plus a geopandas reprojection/area test and a netCDF write/read roundtrip).
+- Why: decisions come from the team lead, who approves spec changes. The trend specification is locked before any gridded result exists, so it cannot be tuned to the results.
+- Result: requirements.txt now pins 11 packages. Extra dependencies pulled in automatically: certifi, cftime, pyogrio, pyproj.
+- Problems / deviations: none.
+
+## 2026-10-18 - src/01, src/02 updated; wider panel and R_julsep
+- Done: 01 also writes soy_clean_wide.csv (13 + Aurangabad, Ahmednagar, Nasik, Satara). 02 adds R_julsep and writes panel_v1_wide.csv. Reran both.
+- Why: A5 requires a wider-set robustness panel; the Jul-Sep window was not in the panel and is needed for the window robustness check. Built in 01/02 (not inside 09) so the wide panel goes through the same checks as the main one.
+- Result: panel_v1.csv 208 rows (old 12 columns unchanged); panel_v1_wide.csv 272 rows = 17 x 16, no missing values.
+- Problems / deviations: none.
+
+## 2026-10-18 - src/pipeline_utils.py and the outputs/final guard
+- Done: shared module for 06-09: CLI (panel, outdir), guard, headers, PanelOLS wrapper with trend options (common, none, district, year_fe) and weights, a fast within estimator for bootstraps (asserted equal to PanelOLS), LSDV prediction, AIC/BIC, effect calculation, year and district resampling.
+- Why: one implementation of the model and the guard keeps 06-09 consistent. The guard compares the resolved input path with config.PANEL_FINAL_FILE, not just the file name, so a copy called panel_final.csv elsewhere is also refused.
+- Result: guard tested for 06, 07, 08, 09; all REFUSED and outputs/final was never created.
+- Problems / deviations: none.
+
+## 2026-10-18 - src/06_models_final.py (prototype run)
+- Done: linear and quadratic (ln yield), the same with yield in kg/ha, and trend-only references. Common trend, entity effects, year-clustered SEs. F-test on the squared term (clustered Wald with F(1, G-1), and classical F), within R2, AIC/BIC, LOYO.
+- Why: two F versions because they disagree when the iid assumption fails, and the reader should see both. Trend-only references show what rainfall adds out of sample. LOYO kg/ha for ln models uses the Duan smearing factor so the back-transform is not biased low.
+- Result: coefficients identical to src/04. Squared term: clustered p = 0.145, classical p = 0.011. AIC prefers quadratic (269.8 vs 274.8); BIC nearly equal (323.2 vs 324.9). LOYO RMSE ln: 0.490 linear, 0.492 quadratic, 0.525 trend-only. LOYO RMSE kg/ha: 561 / 544 / 510 (ln models are worse than trend-only in kg/ha, driven by 2005-06).
+- Problems / deviations: none.
+
+## 2026-10-18 - src/07_diagnostics.py (prototype run)
+- Done: residual vs fitted, Q-Q, residuals by year and by district, Breusch-Pagan, Brown-Forsythe across districts/years, Jarque-Bera, Wooldridge AR(1) test, Pesaran CD, influence (leverage, studentized residuals, Cook's D, DFBETAS), leave-one-district-out.
+- Why: Wooldridge (2002) test implemented directly (first differences, lagged FD residuals, H0 coef = -0.5, district-clustered SE), since linearmodels has no built-in. Pesaran CD added (not in the brief) because shared rainfall series make cross-sectional dependence the main inference risk.
+- Result (linear): BP p = 0.0001; Brown-Forsythe years p = 0.002, districts p = 0.097; JB p = 0.023; Wooldridge F(1,12) = 14.6, p = 0.003 (serial correlation present); Pesaran CD = 12.8, p < 0.001. 13 obs above Cook's D 4/n; 1 with |student resid| > 3 (Beed 2008). Leave-one-district-out 100 mm effect ranges -11.6% to -9.2% (linear) and -14.3% to -12.1% (quadratic); Kolhapur and Sangli move it most.
+- Problems / deviations: within-district serial correlation is not handled by year clustering. Flagged for decision.
+
+## 2026-10-18 - src/08_scenario_100mm.py (prototype run)
+- Done: 100 mm deficit per district/subdivision/state, weak-monsoon 90% and 80% (ILLUSTRATIVE), range curve, timing models (proportional split main, single windows sensitivity, timing_quad exploratory). Year bootstrap (main) and district bootstrap (check), 1000 reps each; percent and kg/ha.
+- Why: Rbar and Ybar are held at sample values so the bootstrap reflects coefficient uncertainty only. Seeds come from SeedSequence(config.SEED).spawn(2) so the two bootstraps are independent and reproducible.
+- Result: state mean, 100 mm deficit: linear -9.9% [years -16.3, -2.4]; quadratic -12.7% [-18.4, -4.4]. Timing_linear split -9.8% [-16.5, -2.0]. The quadratic effect ranges from -20.5% at 499 mm to +1.1% at 1360 mm. Runtime ~11 s.
+- Problems / deviations: CIs differ slightly from src/04 because the random stream differs; documented in HANDOFF.
+
+## 2026-10-18 - src/09_robustness.py (prototype run)
+- Done: base, drop_small_area, area_weighted, wider_districts, trend_none, trend_district, year_fe (skipped: subdivision rainfall), windows Jun-Jul / Jul-Sep / Jun-Sep, drop 2009 / 2014 / 2015. Linear and quadratic each. Delta-method CI from the clustered covariance.
+- Why: delta-method CIs rather than a bootstrap per variant keep runtime short; the bootstrap is in 08 for the headline results.
+- Result: linear 100 mm effect range across variants -8.5% (drop 2014) to -13.2% (area weighted); base -9.9%. Quadratic -11.4% to -16.2%, except the Jun-Jul window (-24.4%). The squared term becomes significant in the wider set (p = 0.018) and with no trend (p = 0.022).
+- Problems / deviations: year_fe not run (by design on panel_v1).
+
+## 2026-10-18 - src/05 skeleton, report skeleton, docs
+- Done: src/05 now lists R_julsep, the panel_final_wide.csv output, and marks every old-to-new pair UNVERIFIED with a refusal rule. report/report.md: 16 headings, each with a comment naming its script and outputs/final file; no results or prototype numbers. Updated data_dictionary.md and HANDOFF.md.
+- Why: the report must only draw from outputs/final; writing the mapping now makes that traceable.
+- Result: done. Nothing run on gridded data; nothing committed. Stopped here as instructed.
+- Problems / deviations: the 16 headings were not specified, so I chose them; flagged for the user.

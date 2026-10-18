@@ -137,6 +137,20 @@ def main() -> None:
     print("Rows per selected district:", per["size"].to_dict())
     print("Selected districts by subdivision:", clean.groupby("subdivision").district.nunique().to_dict())
 
+    # Wider district set for robustness (SPEC amendment A5): selected + named extras.
+    extra = list(C.ROBUST_EXTRA_DISTRICTS)
+    assert not set(extra) & set(selected), f"robustness extras already selected: {set(extra) & set(selected)}"
+    assert set(extra) <= set(d.district), f"robustness extras not in ICRISAT: {set(extra) - set(d.district)}"
+    wide = g[g.district.isin(selected + extra)][
+        ["dist_code", "district", "year", "area_kha", "prod_kt", "yield_kgha", "yield_implied"]
+    ].sort_values(["district", "year"]).reset_index(drop=True)
+    wide["subdivision"] = wide.district.map(m.set_index("district").subdivision)
+    assert wide.isna().sum().sum() == 0
+    wide.to_csv(C.SOY_CLEAN_WIDE_FILE, index=False)
+    print(f"Saved {C.SOY_CLEAN_WIDE_FILE.relative_to(C.ROOT)} (robustness, 13 + {extra}): {len(wide)} rows, "
+          f"{wide.district.nunique()} districts; rows per extra district: "
+          f"{wide[wide.district.isin(extra)].groupby('district').size().to_dict()}")
+
 
 if __name__ == "__main__":
     main()

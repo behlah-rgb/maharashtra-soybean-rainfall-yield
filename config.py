@@ -76,3 +76,28 @@ DISTRICT_SUBDIVISION = {
                            "Sangli", "Satara", "Solapur"],
     "KONKAN & GOA": ["Bombay", "Raigad", "Ratnagiri", "Thane"],
 }
+
+# ---- Amendments 2026-10-18 (see docs/SPEC.md) -----------------------------------
+# Output roots for src/06-09. Scripts refuse to write under OUT_FINAL unless the input
+# panel is PANEL_FINAL_FILE (or PANEL_FINAL_WIDE_FILE for the wider district set).
+OUT_PROTOTYPE = ROOT / "outputs" / "prototype"
+OUT_FINAL = ROOT / "outputs" / "final"
+FINAL_HEADER = "FINAL: district-level gridded panel (panel_final.csv)."
+
+# Wider district set for robustness (A5): the 13 districts plus these four.
+ROBUST_EXTRA_DISTRICTS = ["Aurangabad", "Ahmednagar", "Nasik", "Satara"]
+SOY_CLEAN_WIDE_FILE = DATA_PROCESSED / "soy_clean_wide.csv"
+PANEL_V1_WIDE_FILE = DATA_PROCESSED / "panel_v1_wide.csv"
+PANEL_FINAL_WIDE_FILE = DATA_PROCESSED / "panel_final_wide.csv"
+
+# Alternative rainfall window for robustness: Jul-Sep.
+MONTHS_JULSEP = ["JUL", "AUG", "SEP"]
+
+# Robustness: drop each of these drought years in turn (team-lead list).
+DROUGHT_YEARS = [2009, 2014, 2015]
+
+# Illustrative weak-monsoon scenarios: rainfall at these fractions of each district's mean.
+WEAK_MONSOON_FRACTIONS = [0.9, 0.8]
+
+# Number of grid points for the 100 mm effect across the observed rainfall range.
+RANGE_GRID_POINTS = 50

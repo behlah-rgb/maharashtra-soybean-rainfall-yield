@@ -1,6 +1,6 @@
 # Data dictionary: data/processed/panel_v1.csv
 
-Written 2026-10-18. PROTOTYPE panel: 208 rows = 13 districts x 16 years (2000-2015), one row per district-year. Built by src/01_clean_icrisat.py and src/02_build_panel_subdivision.py.
+Written 2026-10-18. PROTOTYPE panel (13 columns since 2026-10-18): 208 rows = 13 districts x 16 years (2000-2015), one row per district-year. Built by src/01_clean_icrisat.py and src/02_build_panel_subdivision.py.
 
 ICRISAT = data/raw/ICRISAT-District_Level_Data.csv (district-level, older district boundaries).
 IMD = data/raw/rainfall_in_india_1901-2015.csv (monthly rainfall by meteorological subdivision).
@@ -19,8 +19,10 @@ IMD = data/raw/rainfall_in_india_1901-2015.csv (monthly rainfall by meteorologic
 | R_season | mm | IMD `JUN`+`JUL`+`AUG`+`SEP` | Jun-Sep (monsoon) rainfall total for the district's subdivision. Identical for all districts in a subdivision. |
 | R_early | mm | IMD `JUN`+`JUL` | Jun-Jul rainfall total for the subdivision (sowing/establishment). |
 | R_late | mm | IMD `AUG`+`SEP` | Aug-Sep rainfall total for the subdivision (flowering/pod filling). |
+| R_julsep | mm | IMD `JUL`+`AUG`+`SEP` | Jul-Sep rainfall total for the subdivision. Added 2026-10-18 for the alternative-window robustness check (src/09). |
 
 Notes
 - Rainfall columns are subdivision-level, not district-level: only 3 distinct series appear in the panel.
 - No temperature columns. panel_final.csv (src/05) will keep these exact column names and units and add T_season, T_early, T_late (deg C).
+- data/processed/panel_v1_wide.csv has the same columns for the wider robustness district set (13 + Aurangabad, Ahmednagar, Nasik, Satara): 272 rows = 17 x 16 (SPEC amendment A5).
 - Squared rainfall terms (`*_sq`) are created inside src/04 and are not stored in the panel.

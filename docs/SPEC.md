@@ -44,3 +44,22 @@ Written: 2026-10-18 (before any model was fitted). Changes need the user's appro
 ## Data rejected for the model
 - district_wise_rainfall_normal.csv: one long-run normal per district and no yearly values, so it cannot identify year-to-year effects. Not used in the regression.
 - era5_point_temperature.csv: a single grid point, rejected (see docs/notes.md).
+
+## Amendments 2026-10-18 (decisions from the team lead)
+
+A1. **District set.** Defined once, from the full ICRISAT window 2000-2017, and used for every panel (fallback and final): the 13 districts. Reason: the set describes where soybean is grown in the target period and must not change with the rainfall source's coverage.
+
+A2. **Small-area district-years.** The six district-years with area < 20 thousand ha (Beed 2000-2002, Nanded 2000, Osmanabad 2000-2001) stay in the main models. Robustness: (a) drop district-years with area < 20 thousand ha; (b) area-weighted estimation (weights = area_kha).
+
+A3. **Timing models.** Main timing scenario: the 100 mm deficit is split across Jun-Jul and Aug-Sep in proportion to each window's share of the district's mean Jun-Sep rainfall (deficit_early = 100 x Rbar_early,d / Rbar_season,d; deficit_late = 100 - deficit_early). Sensitivity: each window alone. The quadratic timing model is exploratory only. **Headline models: linear and quadratic in R_season.**
+
+A4. **Packages.** xarray, netCDF4, geopandas and shapely are added to .venv and pinned in requirements.txt. Nothing else.
+
+A5. **District rule fixed at 13.** Robustness: a wider set that adds Aurangabad, Ahmednagar, Nasik and Satara (each one qualifying year short). Old-to-new district pairs stay marked UNVERIFIED in code and docs until the teammate confirms them.
+
+A6. **Trend specification (locked before seeing gridded results).** Primary: a common linear trend (t = year - 2000). Robustness: no trend; district-specific linear trends; year fixed effects (only when rainfall is district-level, because with subdivision rainfall year effects would absorb most of the rainfall variation). Note: the negative trend in the prototype is driven by the poor 2014-15 seasons at the end of the 2000-2015 window. It must be re-examined when 2016-2017 are added in the final panel.
+
+Additional specification items implied by the build requested with these amendments (src/06-09):
+- Model comparison: F-test on squared terms (clustered Wald and classical F), within R2, AIC/BIC from the Gaussian log-likelihood of the within model, and leave-one-year-out prediction error. Robustness outcome yield in kg/ha is fitted in src/06.
+- Scenarios (src/08): the 100 mm deficit per district and per subdivision at each district's mean rainfall and across the observed rainfall range. Bootstrap by years (main) and by districts (check). Illustrative weak-monsoon scenarios at 90% and 80% of each district's mean rainfall. Results in percent and in kg/ha.
+- Robustness (src/09): A2a, A2b, A5 wider set, A6 trend variants, alternative rainfall windows (Jun-Jul, Jul-Sep, Jun-Sep), and dropping each drought year (2009, 2014, 2015) in turn.

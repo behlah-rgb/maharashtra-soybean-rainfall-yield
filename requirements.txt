@@ -1,7 +1,11 @@
+geopandas==1.2.0
 linearmodels==7.1
 matplotlib==3.11.2
+netCDF4==1.7.5
 numpy==2.5.4
 pandas==3.0.6
 scipy==1.18.1
 seaborn==0.13.2
+shapely==2.2.0
 statsmodels==0.15.0
+xarray==2026.9.0

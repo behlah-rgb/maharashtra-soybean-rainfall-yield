@@ -1,0 +1,3 @@
+# PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.
+variant,group,note
+year_fe,A6 trend,SKIPPED: rainfall is subdivision-level in this panel (SPEC A6 allows year FE only with district-level rainfall).

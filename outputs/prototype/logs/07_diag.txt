@@ -1,0 +1,89 @@
+============================================================================================
+PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.
+============================================================================================
+Input panel: data/processed/panel_v1.csv   Output folder: outputs/prototype
+Panel: 208 obs, 13 districts, 16 years (2000-2015), balanced=True, rainfall district-level=False, distinct R_season series=3
+
+DIAGNOSTIC TESTS
+    model                                              test    stat      p                                                                                       note
+   linear Breusch-Pagan (resid^2 on trend + rainfall terms) 19.1867 0.0001                                                        LM; F version = 10.416 (p = 0.0000)
+   linear    Brown-Forsythe equal variance across districts  1.5903 0.0969                                                                                  13 groups
+   linear        Brown-Forsythe equal variance across years  2.5243 0.0020                                                                                  16 groups
+   linear                             Jarque-Bera normality  7.5623 0.0228                                                            skew = -0.446, kurtosis = 3.277
+   linear    Wooldridge AR(1) serial correlation (H0: none) 14.5628 0.0025     F(1,12); coef on lagged FD resid = -0.185 (-0.5 under H0), district-clustered SE 0.083
+   linear      AR(1) corr of within residuals (descriptive)  0.3597    NaN biased towards -1/(T-1) under no autocorrelation (small T), so a positive value underst...
+   linear  Pesaran CD cross-sectional dependence (H0: none) 12.8268 0.0000                                              mean pairwise rho = 0.363, mean |rho| = 0.444
+quadratic Breusch-Pagan (resid^2 on trend + rainfall terms) 18.8139 0.0003                                                         LM; F version = 6.762 (p = 0.0002)
+quadratic    Brown-Forsythe equal variance across districts  1.4967 0.1279                                                                                  13 groups
+quadratic        Brown-Forsythe equal variance across years  1.9317 0.0223                                                                                  16 groups
+quadratic                             Jarque-Bera normality  7.8981 0.0193                                                            skew = -0.385, kurtosis = 3.565
+quadratic    Wooldridge AR(1) serial correlation (H0: none) 13.7342 0.0030     F(1,12); coef on lagged FD resid = -0.200 (-0.5 under H0), district-clustered SE 0.081
+quadratic      AR(1) corr of within residuals (descriptive)  0.3673    NaN biased towards -1/(T-1) under no autocorrelation (small T), so a positive value underst...
+quadratic  Pesaran CD cross-sectional dependence (H0: none) 13.1947 0.0000                                              mean pairwise rho = 0.374, mean |rho| = 0.455
+
+INFLUENCE (rule of thumb: Cook's D > 4/n = 0.0192; |student resid| > 3; |DFBETAS| > 2/sqrt(n) = 0.139)
+[linear] Cook's D > 4/n: 13 obs; |student resid| > 3: 1; max leverage 0.096
+ district  year   resid  leverage  student_resid  cooks_d  dfbetas_R_season
+ Kolhapur  2005 -1.1455    0.0812        -2.6833   0.0411           -0.3683
+     Beed  2008 -1.3222    0.0627        -3.0842   0.0406            0.0377
+     Beed  2015 -1.1136    0.0816        -2.6063   0.0390            0.2164
+Osmanabad  2006 -1.1811    0.0660        -2.7463   0.0344           -0.1560
+Osmanabad  2012  1.0913    0.0712         2.5377   0.0320           -0.1694
+     Beed  2012  1.0571    0.0712         2.4557   0.0300           -0.1639
+   Nagpur  2013 -0.8827    0.0958        -2.0689   0.0297           -0.3540
+ Buldhana  2008 -1.0753    0.0660        -2.4918   0.0285            0.1504
+[quadratic] Cook's D > 4/n: 13 obs; |student resid| > 3: 2; max leverage 0.130
+ district  year   resid  leverage  student_resid  cooks_d  dfbetas_R_season  dfbetas_R_season_sq
+Osmanabad  2012  1.2076    0.0815         2.8780   0.0443           -0.3341               0.3044
+Osmanabad  2006 -1.2786    0.0733        -3.0411   0.0438           -0.2954               0.2687
+     Beed  2012  1.1734    0.0815         2.7932   0.0418           -0.3242               0.2954
+     Beed  2008 -1.3263    0.0627        -3.1416   0.0394           -0.0045               0.0116
+ Kolhapur  2005 -1.1220    0.0816        -2.6664   0.0383           -0.0096              -0.0570
+     Beed  2015 -0.9597    0.0996        -2.2924   0.0355            0.3533              -0.3241
+ Buldhana  2008 -1.1214    0.0676        -2.6440   0.0307           -0.0798               0.1102
+   Nanded  2012  0.9651    0.0815         2.2824   0.0283           -0.2649               0.2414
+
+LEAVE-ONE-DISTRICT-OUT (100 mm effect at the full-sample mean of district mean R_season)
+[linear]
+   dropped   n      trend    R_season  pct_100mm_at_mean_R
+    (none) 208 -0.0336363  0.00104026           -0.0987984
+     Akola 192 -0.0327748 0.000988514           -0.0941227
+ Amarawati 192 -0.0341228 0.000961631           -0.0916842
+  Buldhana 192 -0.0345285 0.000981982           -0.0935308
+Chandrapur 192  -0.031329  0.00105329            -0.099972
+    Nagpur 192 -0.0313085  0.00109069            -0.103331
+    Wardha 192 -0.0310033  0.00106492            -0.101018
+   Yeotmal 192  -0.031588 0.000998763           -0.0950507
+      Beed 192 -0.0329078 0.000982711           -0.0935969
+    Nanded 192 -0.0330296  0.00100991           -0.0960584
+ Osmanabad 192 -0.0373104  0.00100033            -0.095192
+  Parbhani 192 -0.0327732 0.000997297            -0.094918
+  Kolhapur 192 -0.0388349  0.00123643            -0.116305
+    Sangli 192  -0.035823  0.00117543            -0.110898
+  range of 100 mm effect across drops: -11.63% to -9.17% (full sample -9.88%)
+[quadratic]
+   dropped   n      trend   R_season  R_season_sq  pct_100mm_at_mean_R
+    (none) 208 -0.0277463 0.00355553 -1.40047e-06            -0.127582
+     Akola 192 -0.0263066 0.00370928 -1.52807e-06            -0.123574
+ Amarawati 192 -0.0274856 0.00375351 -1.56801e-06            -0.121973
+  Buldhana 192 -0.0275917 0.00389988 -1.63878e-06            -0.125099
+Chandrapur 192 -0.0255707 0.00347547 -1.36037e-06            -0.126069
+    Nagpur 192 -0.0255816 0.00349966 -1.35295e-06            -0.129191
+    Wardha 192 -0.0249613 0.00360645  -1.4274e-06            -0.128349
+   Yeotmal 192 -0.0258439 0.00341495   -1.357e-06            -0.121226
+      Beed 192 -0.0278878 0.00328143 -1.26293e-06            -0.122424
+    Nanded 192 -0.0275347 0.00352614 -1.38243e-06            -0.127479
+ Osmanabad 192 -0.0319792 0.00344161 -1.34126e-06            -0.125722
+  Parbhani 192 -0.0275565 0.00338611 -1.31243e-06            -0.124812
+  Kolhapur 192 -0.0329441 0.00358434 -1.30437e-06            -0.143071
+    Sangli 192 -0.0295332 0.00368236 -1.39272e-06            -0.139621
+  range of 100 mm effect across drops: -14.31% to -12.12% (full sample -12.76%)
+table -> outputs/prototype/tables/07_diag_tests.csv
+table -> outputs/prototype/tables/07_diag_influence.csv
+table -> outputs/prototype/tables/07_diag_leave_one_district_out.csv
+figure -> outputs/prototype/figures/07_diag_resid_vs_fitted.png
+figure -> outputs/prototype/figures/07_diag_qq.png
+figure -> outputs/prototype/figures/07_diag_resid_by_year.png
+figure -> outputs/prototype/figures/07_diag_resid_by_district.png
+figure -> outputs/prototype/figures/07_diag_leave_one_district_out.png
+PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.

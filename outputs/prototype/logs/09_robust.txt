@@ -1,0 +1,60 @@
+============================================================================================
+PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.
+============================================================================================
+Input panel: data/processed/panel_v1.csv   Output folder: outputs/prototype
+Panel: 208 obs, 13 districts, 16 years (2000-2015), balanced=True, rainfall district-level=False, distinct R_season series=3
+Wider panel data/processed/panel_v1_wide.csv: 272 obs, 17 districts, 16 years (2000-2015), balanced=True, rainfall district-level=False, distinct R_season series=3
+year_fe SKIPPED: rainfall is subdivision-level in this panel (SPEC A6 allows year FE only with district-level rainfall).
+
+ROBUSTNESS: 100 mm deficit at mean rainfall of the variant's window (95% delta-method CI, year-clustered)
+
+[linear]
+        variant             group   n  districts  years rain_var  Rbar_mm        b_R       se_R       p_R  trend_coef  within_r2                  effect
+           base              base 208         13     16 R_season   832.12  0.0010403 0.00034664 0.0030464   -0.033636    0.23635  -9.88% [-15.80, -3.54]
+drop_small_area A2 sample/weights 202         13     16 R_season   832.73  0.0010346 0.00034788 0.0033259   -0.033779    0.23361  -9.83% [-15.77, -3.47]
+  area_weighted A2 sample/weights 208         13     16 R_season   832.12  0.0014199 0.00036077 0.0001157   -0.042235     0.3346 -13.24% [-19.16, -6.88]
+wider_districts      A5 districts 272         17     16 R_season   814.35 0.00089568 0.00031813 0.0052544   -0.028664    0.20938  -8.57% [-14.09, -2.68]
+     trend_none          A6 trend 208         13     16 R_season   832.12  0.0010744 0.00045035  0.018005         NaN    0.13985 -10.19% [-17.78, -1.90]
+ trend_district          A6 trend 208         13     16 R_season   832.12  0.0011017 0.00034673 0.0017473         NaN    0.30567 -10.43% [-16.32, -4.13]
+  window_JunJul       rain window 208         13     16  R_early    426.1  0.0012466 0.00055649  0.026224   -0.031031    0.20417 -11.72% [-20.84, -1.55]
+  window_JulSep       rain window 208         13     16 R_julsep   669.45  0.0011274 0.00035397 0.0016874    -0.03937     0.2315 -10.66% [-16.65, -4.24]
+  window_JunSep       rain window 208         13     16 R_season   832.12  0.0010403 0.00034664 0.0030464   -0.033636    0.23635  -9.88% [-15.80, -3.54]
+      drop_2009 drop drought year 195         13     15 R_season   845.95 0.00099793  0.0004116  0.016317   -0.033155    0.21424  -9.50% [-16.51, -1.89]
+      drop_2014 drop drought year 195         13     15 R_season   843.06 0.00088763  0.0003944  0.025621   -0.025478    0.15735  -8.49% [-15.30, -1.14]
+      drop_2015 drop drought year 195         13     15 R_season   843.53 0.00091145 0.00041855  0.030735   -0.023717     0.1535  -8.71% [-15.90, -0.91]
+
+[quadratic]
+        variant             group   n  districts  years rain_var  Rbar_mm       b_R      se_R      b_R_sq    se_R_sq     p_R_sq  trend_coef  within_r2                   effect
+           base              base 208         13     16 R_season   832.12 0.0035555 0.0016429 -1.4005e-06 9.1085e-07    0.12581   -0.027746    0.26178  -12.76% [-18.87, -6.19]
+drop_small_area A2 sample/weights 202         13     16 R_season   832.73   0.00352 0.0016534 -1.3825e-06 9.1668e-07    0.13322   -0.027602    0.25856  -12.68% [-18.81, -6.09]
+  area_weighted A2 sample/weights 208         13     16 R_season   832.12 0.0037843 0.0018896 -1.2891e-06  1.083e-06    0.23543   -0.035144    0.35582 -16.20% [-21.62, -10.41]
+wider_districts      A5 districts 272         17     16 R_season   814.35 0.0038415 0.0012465 -1.6638e-06 6.9918e-07   0.018072   -0.022562     0.2495  -12.17% [-17.50, -6.51]
+     trend_none          A6 trend 208         13     16 R_season   832.12 0.0048159 0.0016992 -2.0882e-06 9.0676e-07   0.022351         NaN    0.20296  -14.35% [-21.36, -6.73]
+ trend_district          A6 trend 208         13     16 R_season   832.12 0.0035085 0.0015409  -1.337e-06 8.4097e-07    0.11364         NaN    0.32806  -13.21% [-19.48, -6.45]
+  window_JunJul       rain window 208         13     16  R_early    426.1 0.0067182 0.0010009 -5.2184e-06 8.0096e-07 6.2208e-10     -0.0186    0.33799 -24.37% [-31.42, -16.59]
+  window_JulSep       rain window 208         13     16 R_julsep   669.45 0.0013588 0.0019338 -1.6286e-07 1.3352e-06    0.90304   -0.039161    0.23167  -10.93% [-18.17, -3.05]
+  window_JunSep       rain window 208         13     16 R_season   832.12 0.0035555 0.0016429 -1.4005e-06 9.1085e-07    0.12581   -0.027746    0.26178  -12.76% [-18.87, -6.19]
+      drop_2009 drop drought year 195         13     15 R_season   845.95 0.0034142 0.0016773 -1.3394e-06 9.0945e-07    0.14257   -0.027617    0.23861  -12.03% [-19.12, -4.32]
+      drop_2014 drop drought year 195         13     15 R_season   843.06 0.0035925 0.0018511 -1.4987e-06 1.0046e-06    0.13748   -0.019304    0.18745  -11.44% [-18.54, -3.73]
+      drop_2015 drop drought year 195         13     15 R_season   843.53 0.0035076 0.0019019 -1.4326e-06  1.032e-06     0.1668   -0.018148    0.18181  -11.61% [-19.07, -3.46]
+
+Notes per variant:
+  base: common trend, all rows, Jun-Sep
+  drop_small_area: drops 6 rows: Beed 2000, Beed 2001, Beed 2002, Nanded 2000, Osmanabad 2000, Osmanabad 2001
+  area_weighted: weights = area_kha
+  wider_districts: adds Ahmednagar, Aurangabad, Nasik, Satara
+  trend_none: no trend
+  trend_district: district-specific linear trends
+  window_JunJul: R = Jun-Jul
+  window_JulSep: R = Jul-Sep
+  window_JunSep: R = Jun-Sep (same as base)
+  drop_2009: drops 2009
+  drop_2014: drops 2014
+  drop_2015: drops 2015
+  year_fe: SKIPPED: rainfall is subdivision-level in this panel (SPEC A6 allows year FE only with district-level rainfall).
+Window variants change what '100 mm' means: 100 mm is a larger share of a shorter window.
+table -> outputs/prototype/tables/09_robust_results.csv
+table -> outputs/prototype/tables/09_robust_skipped.csv
+figure -> outputs/prototype/figures/09_robust_forest.png
+Results are associations under the model's assumptions, not causal effects.
+PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.

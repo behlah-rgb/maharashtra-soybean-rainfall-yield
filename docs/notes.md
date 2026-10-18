@@ -40,3 +40,20 @@
 
 ## 2026-10-18 - src/05 skeleton
 - The precipitation conversion for ERA5-Land monthly means (m/day x 1000 x days in month) is written in the docstring as the expected case only; the code must read it from the NetCDF attributes. The old-to-new district pairs listed in the docstring (e.g. Washim -> Akola) are hypotheses to verify against the teammate's notes, not decisions.
+
+## 2026-10-18 - team-lead decisions (see SPEC.md Amendments 2026-10-18)
+- D1: district set fixed at the 13 districts from the 2000-2017 rule, for every panel. Confirms the earlier interpretation; no data change.
+- D2: the six small-area district-years (Beed 2000-02, Nanded 2000, Osmanabad 2000-01) stay in the main models. Robustness: drop rows with area_kha < 20; area-weighted estimation.
+- D3: timing-model main scenario = proportional split of the 100 mm by each window's share of the district's mean Jun-Sep rainfall; single-window shocks as sensitivity. The quadratic timing model is exploratory.
+- D4: installed xarray 2026.9.0, netCDF4 1.7.5, geopandas 1.2.0, shapely 2.2.0. pip also pulled in their required dependencies (certifi, cftime, pyogrio, pyproj); no other top-level package was installed. Import and smoke tests pass.
+- D5: wider robustness set = 13 + Aurangabad, Ahmednagar, Nasik, Satara. These four have soybean area > 0 in all 18 years, so the wider panel stays balanced. Old-to-new district pairs remain UNVERIFIED.
+- D6: primary trend = common linear. Robustness: none, district-specific, year FE (year FE only with district-level rainfall).
+
+## 2026-10-18 - build of src/06-09 (prototype runs only)
+- New panel column R_julsep = JUL+AUG+SEP (mm) for the alternative-window robustness check. panel_v1.csv was rebuilt; the existing 12 columns are byte-for-byte equal to the previous version (checked with pandas assert_frame_equal).
+- New files: soy_clean_wide.csv (306 rows, 17 districts, 2000-2017) and panel_v1_wide.csv (272 rows = 17 x 16). The four extra districts have area > 0 in every year, so no rows were dropped for zero area. Several of their years have area < 20k ha (that is why they fail the rule); those rows are kept.
+- src/08 kg/ha conversion for ln models: kg/ha = pct x Ybar_d, where Ybar_d = the district's mean observed yield over the panel years. This is a choice; flagged in HANDOFF.
+- src/08 subdivision and state rows = unweighted mean of district rows, computed inside each bootstrap replication.
+- src/08 range curve: R runs from min(R_season)+100 to max(R_season), so both R and R-100 are inside the observed range (no extrapolation).
+- src/09 year-FE variant skipped on panel_v1 because rainfall is subdivision-level (SPEC A6). Detection is data-based: R_season constant within every subdivision-year.
+- src/09 drop_small_area removes 6 rows: Beed 2000-2002, Nanded 2000, Osmanabad 2000-2001.

@@ -9,7 +9,8 @@ Waits for data from the teammate (see docs/HANDOFF.md):
   - optional irrigation data                                         -> (later control; not in this file)
 
 Output: config.PANEL_FINAL_FILE with exactly the columns of panel_v1.csv (same names, same units) plus
-temperature columns. `subdivision` is kept for reference only; rainfall now comes from district polygons.
+temperature columns; and config.PANEL_FINAL_WIDE_FILE with the same columns for the wider robustness
+district set (13 + config.ROBUST_EXTRA_DISTRICTS, built from data/processed/soy_clean_wide.csv). `subdivision` is kept for reference only; rainfall now comes from district polygons.
 
 Extra packages needed (NOT installed; ask the user before adding to requirements.txt):
 xarray + netCDF4 (NetCDF), geopandas + shapely (polygons), and possibly regionmask or rioxarray
@@ -26,7 +27,7 @@ import config as C  # noqa: E402
 # Same columns as panel_v1.csv, then temperature columns (deg C, district means over grid cells).
 PANEL_V1_COLS = ["district", "dist_code", "subdivision", "year", "trend",
                  "area_kha", "prod_kt", "yield_kgha", "ln_yield",
-                 "R_season", "R_early", "R_late"]
+                 "R_season", "R_early", "R_late", "R_julsep"]
 TEMP_COLS = ["T_season", "T_early", "T_late"]
 
 
@@ -87,11 +88,13 @@ def dissolve_to_icrisat_districts(boundaries_path: Path, old_new_map_path: Path)
     Parameters
     ----------
     boundaries_path : current district boundary file (shapefile / GeoJSON / GeoPackage).
-    old_new_map_path : CSV of (current_district, icrisat_district), built from the teammate's
-        old-to-new district notes (e.g. Washim -> Akola, Hingoli -> Parbhani, Gondia -> Bhandara,
-        Nandurbar -> Dhule, Latur -> Osmanabad, Jalna -> Aurangabad/Parbhani, Palghar -> Thane,
-        Mumbai Suburban -> Bombay). The pairs listed here are hypotheses only: VERIFY every one
-        against the notes before use, and record splits that crossed old district lines.
+    old_new_map_path : CSV of (current_district, icrisat_district, status), built from the teammate's
+        old-to-new district notes. UNVERIFIED candidate pairs (not yet confirmed by the teammate;
+        SPEC A5): Washim -> Akola, Hingoli -> Parbhani, Gondia -> Bhandara, Nandurbar -> Dhule,
+        Latur -> Osmanabad, Jalna -> Aurangabad/Parbhani, Palghar -> Thane, Mumbai Suburban -> Bombay.
+        The CSV must carry status = UNVERIFIED for every pair until the teammate confirms it; the
+        build must refuse to write panel_final.csv while any pair used by a selected district is
+        UNVERIFIED. Record splits that crossed old district lines.
 
     Returns
     -------
@@ -138,7 +141,7 @@ def seasonal_windows(monthly: pd.DataFrame, how: str):
     Parameters
     ----------
     monthly : output of district_average (district, year, month, value).
-    how : "sum" for rainfall (mm) -> R_season, R_early, R_late;
+    how : "sum" for rainfall (mm) -> R_season, R_early, R_late, R_julsep (config.MONTHS_JULSEP);
           "mean" for temperature (deg C) -> T_season, T_early, T_late.
           Windows come from config.MONTHS_SEASON / MONTHS_EARLY / MONTHS_LATE.
 
@@ -154,13 +157,13 @@ def build_panel_final(rain: pd.DataFrame, temp: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    rain : district-year R_season, R_early, R_late (mm) from the IMD grid.
+    rain : district-year R_season, R_early, R_late, R_julsep (mm) from the IMD grid.
     temp : district-year T_season, T_early, T_late (deg C) from ERA5-Land.
 
     Returns
     -------
     pandas.DataFrame with columns PANEL_V1_COLS + TEMP_COLS, years YEAR_START..YEAR_END_TARGET,
-    written to config.PANEL_FINAL_FILE.
+    written to config.PANEL_FINAL_FILE (13 districts) and config.PANEL_FINAL_WIDE_FILE (wider set).
 
     Notes
     -----
