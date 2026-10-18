@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.ipynb_checkpoints/
+.pytest_cache/
+
+# macOS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Large gridded downloads (keep the folder, ignore the contents)
+data/raw/grids/*
+!data/raw/grids/.gitkeep
+
+# Gridded file types, wherever they end up
+*.nc
+*.grd
+*.tif
+*.zip
+
+# Credentials (Copernicus CDS key etc.)
+.cdsapirc
+*.key
+
+# LaTeX build files (only if you write the report in LaTeX)
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
