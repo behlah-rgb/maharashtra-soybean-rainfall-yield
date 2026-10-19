@@ -47,4 +47,5 @@ step $PY src/09_robustness.py "$FINAL" outputs/final --wide-panel "$WIDE"
 step $PY src/11_sanity_checks.py "$FINAL" outputs/final
 step $PY src/10_results_summary.py
 step $PY src/12_report_inputs.py
+step $PY src/13_collect_report_figures.py
 echo; echo "run_all.sh: all steps completed"

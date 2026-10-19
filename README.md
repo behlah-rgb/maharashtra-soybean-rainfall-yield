@@ -1,39 +1,36 @@
 # maharashtra-soybean-rainfall-yield
 
-Group 28 mathematical-modelling project: regression of district-level soybean yield on monsoon rainfall in Maharashtra. Specification of record: `docs/SPEC.md`. Handoff notes: `docs/HANDOFF.md`.
+Group 28 mathematical-modelling project: district fixed-effects regression of soybean yield on monsoon rainfall and temperature in Maharashtra, 13 districts, 2000-2017. Specification of record: `docs/SPEC.md` (with dated amendments). Submission overview: `docs/SUBMISSION_README.md`. Handoff notes: `docs/HANDOFF.md`.
 
-Setup (from the repo root): `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
+## Quick start
 
-Run the scripts in order from the repo root:
+1. **Environment** (from the repo root; developed with Python 3.14.6):
+   ```
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. **Raw weather data.** The IMD gridded daily rainfall (0.25 deg) and Tmax/Tmin (1.0 deg) files for 2000-2017 (54 files, about 500 MB) are **not included**. `src/05a_download_weather.py` downloads them with imdlib into `data/raw/grids/imd/` (network access needed; about 1 hour, IMD's server is slow) together with the DataMeet 2011 district boundaries. Sources and checksums: `docs/data_sources.md`.
+3. **Run everything** from `data/raw`:
+   ```
+   bash run_all.sh                  # first run: downloads the grids (05a), then builds and analyses
+   bash run_all.sh --skip-download  # later runs: about 30 s; fails if the grids are missing
+   bash run_all.sh --prototype      # also re-runs the historical prototype steps (03, 04 on panel_v1)
+   ```
+   `run_all.sh` runs, in order: 01, 02, (05a), 05, 05c, 05b, 03, 06, 07, 08, 09, 11, 10, 12, 13. It stops at the first error.
 
-```
-python src/01_clean_icrisat.py
-python src/02_build_panel_subdivision.py
-python src/03_eda.py           data/processed/panel_v1.csv outputs/prototype
-python src/04_models_prototype.py
-python src/05a_download_weather.py   # IMD grids via imdlib + DataMeet boundaries (network; ~1 h)
-python src/05_build_panel_gridded.py
-python src/05b_validate_panel.py
-python src/05c_diagnose_ghats.py
-python src/06_models_final.py  data/processed/panel_v1.csv outputs/prototype
-python src/07_diagnostics.py   data/processed/panel_v1.csv outputs/prototype
-python src/08_scenario_100mm.py data/processed/panel_v1.csv outputs/prototype
-python src/09_robustness.py    data/processed/panel_v1.csv outputs/prototype --wide-panel data/processed/panel_v1_wide.csv
-```
+## Where outputs go
 
-Since 2026-10-19 (SPEC A13/A14) src/06-09 use the temperature models and REQUIRE data/processed/panel_final.csv; they no longer run on panel_v1.csv. The prototype outputs in outputs/prototype are kept as historical records only.
+| Location | Contents |
+|---|---|
+| `data/interim/`, `data/processed/` | district map, crosswalk, dissolved old districts, grid weights, `panel_final.csv` (13 x 18) and `panel_final_wide.csv` (17 x 18) |
+| `outputs/final/{tables,figures,logs}/` | final results (src/03, 05c, 06-09, 11); the only outputs that may feed the report |
+| `outputs/tables/validation_*`, `outputs/figures/validation_*` | panel validation (src/05b) |
+| `outputs/prototype/`, `outputs/tables/prototype_*`, `outputs/logs/prototype_models.txt` | historical prototype on subdivision rainfall, labelled PROTOTYPE - NOT FOR THE REPORT |
+| `docs/RESULTS_SUMMARY.md`, `docs/REPORT_INPUTS.md` | generated summaries of every headline number and the report's tables/figure list |
+| `report/figures_final/` | the report figures (copied by src/13) with `MANIFEST.csv` |
 
-One command reproduces everything from data/raw (about 30 s without downloads): `bash run_all.sh --skip-download` (drop the flag to re-check the IMD/DataMeet downloads; add `--prototype` to re-run the historical prototype steps). Individual steps:
+## Notes
 
-```
-python src/03_eda.py            data/processed/panel_final.csv outputs/final
-python src/06_models_final.py   data/processed/panel_final.csv outputs/final
-python src/07_diagnostics.py    data/processed/panel_final.csv outputs/final
-python src/08_scenario_100mm.py data/processed/panel_final.csv outputs/final
-python src/09_robustness.py     data/processed/panel_final.csv outputs/final --wide-panel data/processed/panel_final_wide.csv
-python src/11_sanity_checks.py  data/processed/panel_final.csv outputs/final
-python src/10_results_summary.py   # writes docs/RESULTS_SUMMARY.md from outputs/final tables
-python src/12_report_inputs.py     # writes docs/REPORT_INPUTS.md (tables and figure list for the report)
-```
-
-For the final analysis, replace `panel_v1.csv` with `panel_final.csv` (and `panel_v1_wide.csv` with `panel_final_wide.csv`) and `outputs/prototype` with `outputs/final`. Scripts 03 and 06-09 refuse to write to `outputs/final` from any other input.
+- `src/06`-`09` and `src/11` require `data/processed/panel_final.csv`; they no longer run on `panel_v1.csv` (no temperature). Scripts 03 and 06-09/11 refuse to write to `outputs/final` from any other input.
+- Raw files in `data/raw` are never edited. Reproducibility was checked on 2026-10-19 by deleting `data/processed` and `outputs/final` and re-running: all tables and figures came out byte-identical (`docs/PROGRESS.md`).

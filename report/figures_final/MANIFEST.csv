@@ -1,0 +1,22 @@
+file,report_subsection,caption,copied_from,sha256
+validation_a_subdivision_series.png,1.3,"Gridded vs IMD subdivision Jun-Sep rainfall, 2000-2015.",outputs/figures/validation_a_subdivision_series.png,7b74985e4e71ade5226234b07ff3a727ee71183fe2c9bf677a2b96789f7eeaec
+validation_c_bars.png,1.3,Mean rainfall and temperature of the 13 panel districts.,outputs/figures/validation_c_bars.png,db63bdf031573c9a7272e0b223c83b6fb78411f54948c7323d602e9d3085c41d
+validation_c_map_rainfall.png,1.3,Mean Jun-Sep rainfall 2000-2017 by old ICRISAT district.,outputs/figures/validation_c_map_rainfall.png,ce72afd856650b1cefb5daac641492a82277210bc635ea9e89c75b6761596113
+validation_c_map_temperature.png,1.3,Mean Jun-Sep temperature 2000-2017 by old ICRISAT district.,outputs/figures/validation_c_map_temperature.png,b29044909eeb596703ca0a77e5ec766bdb52640d491e1198545d474f2e9a175a
+eda_correlation_matrix.png,1.4,Correlation matrix of model variables.,outputs/final/figures/eda_correlation_matrix.png,b74baddeaa98b9c92df9eb8177e9146891fdf6c232eeec5464067959a0215cf5
+eda_mean_yield_by_year.png,1.4,"Mean soybean yield by year, all districts and by subdivision.",outputs/final/figures/eda_mean_yield_by_year.png,5a6b6cc82506963250a818277ebde56b67b577643df78d65b0c57e6733eed9c3
+eda_rainfall_by_subdivision.png,1.4,Jun-Sep rainfall by subdivision (mean of panel districts).,outputs/final/figures/eda_rainfall_by_subdivision.png,104ca0d8804ced1e30ff02612b2bd42a53d0fc53037a1764c9db0e302d0a9cda
+eda_yield_heatmap.png,1.4,Soybean yield by district and year.,outputs/final/figures/eda_yield_heatmap.png,1abd55f1a1cd905756a18855b3ddfdb35f0cf1fc10da5ef4927e2117a8f63703
+eda_yield_vs_rseason.png,1.4,"Yield vs Jun-Sep rainfall, district-years.",outputs/final/figures/eda_yield_vs_rseason.png,9de742243d86b7006adfd3af304df8af6816168b1358b5db54e5da8bca4e1b1d
+validation_e_yield.png,1.4,"Yield vs rainfall and mean yield by year, 2000-2017.",outputs/figures/validation_e_yield.png,7044f71a2456390edbada2d3ec13ae5151005e79072019e4217bc08a67ca156b
+validation_d_rainfall_correlation.png,1.6,Cross-district correlation of Jun-Sep rainfall.,outputs/figures/validation_d_rainfall_correlation.png,0fa9a6e7f367b12c30e803010b25b0011dd031ebb982a20dfb356b2b610d41cd
+08_scenario_district_effects.png,3.1,"100 mm deficit effect by district, headline model, variants A and B.",outputs/final/figures/08_scenario_district_effects.png,69b06ef10b518fe363a4ef851efd50980264f56018abae2accbd3b11e8410465
+08_scenario_range_curve.png,3.3,"100 mm deficit effect across the observed rainfall range, M1 and M2.",outputs/final/figures/08_scenario_range_curve.png,14c94d7edcfbbb77706107b5b82dfb80c7d87355cd4e2fd9a3a7d231af1f5989
+11_sanity_response_curves.png,3.3,"Response of ln(yield) to rainfall and temperature, dry/median/wet district.",outputs/final/figures/11_sanity_response_curves.png,de64fc6144940781e87b1817f0dca56626564e20749e441bd5e916f29adf06df
+07_diag_qq.png,4.1,"Normal Q-Q plot of studentized residuals, M1 and M2.",outputs/final/figures/07_diag_qq.png,c6425769fd3a925d1f923cadf96c13428719530d7358cb2c335cb7e960a9a568
+07_diag_resid_by_district.png,4.1,"Residuals by district, M1 and M2.",outputs/final/figures/07_diag_resid_by_district.png,4679ac38eba62493800a7a2c3aec32454e3fdaead9b02b6e7fdb9d456f43cd87
+07_diag_resid_by_year.png,4.1,"Residuals by year, M1 and M2.",outputs/final/figures/07_diag_resid_by_year.png,2602e8beb5e3eb741b8266a2682d85ab29e28971192054602dfa923409435d11
+07_diag_resid_vs_fitted.png,4.1,"Residuals vs fitted values, M1 and M2.",outputs/final/figures/07_diag_resid_vs_fitted.png,33f904a00db3cad0745f71e04113b51e3d28a9a8e61bbc1f94dc8f8a016917f1
+07_diag_leave_one_district_out.png,4.2,"100 mm effect with each district left out, M1 and M2.",outputs/final/figures/07_diag_leave_one_district_out.png,e119e02c53df4b3e5ccd83a3c9f6f4526b90c0131a95deed9330af2414e8ec63
+09_robust_area_weighting.png,4.3,District-specific 100 mm effects vs share of area weight (M1).,outputs/final/figures/09_robust_area_weighting.png,0bcf104787d9265b4ced00770b4508080c01c1334359f5aa4225e7d79d07675d
+09_robust_forest.png,4.3,"100 mm effect across robustness variants, M1 and M2.",outputs/final/figures/09_robust_forest.png,bcafbd1433b1b10fb1be55966d033ad924d5153a2ee5b5c3b972ece8224b591d
