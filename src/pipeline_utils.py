@@ -20,15 +20,21 @@ import config as C  # noqa: E402
 
 RAIN_VARS = ["R_season", "R_early", "R_late", "R_julsep"]
 
-# Model catalogue. rain: {window: include square?}
+# Model catalogue (SPEC A13.2). "rain" maps a regressor column to "include its square?" (the name is kept
+# from the rainfall-only stage; it now holds every weather regressor). Columns built in load_panel():
+#   Rc = (R_season - grand mean)/100 [per 100 mm], Tc = T_season - grand mean [per deg C],
+#   Rec, Rlc = centred R_early, R_late per 100 mm, dry = dry_spell_max (days).
 MODELS = {
-    "linear": {"outcome": "ln_yield", "rain": {"R_season": False}, "role": "headline"},
-    "quadratic": {"outcome": "ln_yield", "rain": {"R_season": True}, "role": "headline"},
-    "linear_level": {"outcome": "yield_kgha", "rain": {"R_season": False}, "role": "robustness outcome (kg/ha)"},
-    "quadratic_level": {"outcome": "yield_kgha", "rain": {"R_season": True}, "role": "robustness outcome (kg/ha)"},
-    "timing_linear": {"outcome": "ln_yield", "rain": {"R_early": False, "R_late": False}, "role": "secondary"},
-    "timing_quad": {"outcome": "ln_yield", "rain": {"R_early": True, "R_late": True}, "role": "exploratory"},
+    "M1": {"outcome": "ln_yield", "rain": {"Rc": False, "Tc": False}, "role": "headline (linear)"},
+    "M2": {"outcome": "ln_yield", "rain": {"Rc": True, "Tc": True}, "role": "headline (quadratic)"},
+    "M1_level": {"outcome": "yield_kgha", "rain": {"Rc": False, "Tc": False}, "role": "robustness outcome (kg/ha)"},
+    "M2_level": {"outcome": "yield_kgha", "rain": {"Rc": True, "Tc": True}, "role": "robustness outcome (kg/ha)"},
+    "timing": {"outcome": "ln_yield", "rain": {"Rec": False, "Rlc": False, "dry": False, "Tc": False},
+               "role": "exploratory (timing)"},
+    "M2_rain_only": {"outcome": "ln_yield", "rain": {"Rc": True, "Tc": False},
+                     "role": "exploratory (quadratic in rainfall only)"},
 }
+HEADLINE_PAIR = ("M1", "M2")
 
 
 # ---- CLI and guard -------------------------------------------------------------------------
@@ -127,18 +133,45 @@ def rel(p: Path) -> str:
 
 
 # ---- Panel ---------------------------------------------------------------------------------
-def load_panel(path: Path) -> pd.DataFrame:
+def centring_constants(p: pd.DataFrame) -> dict:
+    """Grand means over the panel's district-years (SPEC A13.2)."""
+    return {"R_season": float(p.R_season.mean()), "T_season": float(p.T_season.mean()),
+            "R_early": float(p.R_early.mean()), "R_late": float(p.R_late.mean()),
+            "R_julsep": float(p.R_julsep.mean())}
+
+
+def add_model_columns(p: pd.DataFrame, consts: dict, rain_window: str = "R_season") -> pd.DataFrame:
+    """Centred, scaled regressors. rain_window selects the rainfall window used as Rc (src/09 windows);
+    it is centred at its own grand mean in consts."""
+    p = p.copy()
+    p["Rc"] = (p[rain_window] - consts[rain_window]) / C.RAIN_UNIT_MM
+    p["Tc"] = p.T_season - consts["T_season"]
+    p["Rec"] = (p.R_early - consts["R_early"]) / C.RAIN_UNIT_MM
+    p["Rlc"] = (p.R_late - consts["R_late"]) / C.RAIN_UNIT_MM
+    p["dry"] = p.dry_spell_max.astype(float)
+    for v in ["Rc", "Tc", "Rec", "Rlc", "dry"]:
+        p[f"{v}_sq"] = p[v] ** 2
+    return p
+
+
+def load_panel(path: Path, consts: dict | None = None) -> pd.DataFrame:
+    """Load and check a panel with temperature (panel_final*.csv); add model columns. consts: centring
+    constants (default: this panel's own grand means). Stored in p.attrs['consts']."""
     p = pd.read_csv(path)
-    need = ["district", "subdivision", "year", "trend", "area_kha", "yield_kgha", "ln_yield", *RAIN_VARS]
+    need = ["district", "subdivision", "year", "trend", "area_kha", "yield_kgha", "ln_yield", *RAIN_VARS,
+            "T_season", "dry_spell_max"]
     miss = set(need) - set(p.columns)
-    assert not miss, f"panel lacks columns {miss}"
+    assert not miss, (f"panel lacks columns {miss}. The A13 model set needs T_season and dry_spell_max "
+                      "(panel_final.csv); panel_v1.csv has no temperature.")
     assert not p.duplicated(["district", "year"]).any(), "duplicate district-year rows"
     na = p[need].isna().sum()
     assert na.sum() == 0, f"missing values:\n{na[na > 0]}"
     assert (p.yield_kgha > 0).all() and np.allclose(p.ln_yield, np.log(p.yield_kgha))
-    for v in RAIN_VARS:
-        p[f"{v}_sq"] = p[v] ** 2
-    return p.sort_values(["district", "year"]).reset_index(drop=True)
+    p = p.sort_values(["district", "year"]).reset_index(drop=True)
+    consts = consts or centring_constants(p)
+    p = add_model_columns(p, consts)
+    p.attrs["consts"] = consts
+    return p
 
 
 def rainfall_is_district_level(p: pd.DataFrame) -> bool:
@@ -297,6 +330,84 @@ def wild_cluster_test(p: pd.DataFrame, outcome: str, rain: dict, term: str) -> d
         how = f"{C.N_WILD} random Rademacher draws, seed {C.BOOT_SEEDS['wild']}"
     tb = tstat(yhat_r[:, None] + u_r[:, None] * V[codes, :])
     return {"t": t0, "p": float(np.mean(np.abs(tb) >= abs(t0))), "clusters": G, "draws": how}
+
+
+def weather_lp(params: pd.Series, consts: dict, R=None, T=None, Re=None, Rl=None, dry=None) -> np.ndarray:
+    """Weather part of the linear predictor for raw values (mm, deg C, days); terms absent from params
+    contribute nothing. Rc/Rc_sq use R (Jun-Sep), Tc/Tc_sq use T, Rec/Rlc use Re/Rl."""
+    out = 0.0
+    def add(col, x):
+        nonlocal out
+        if x is None:
+            return
+        x = np.asarray(x, float)
+        if col in params.index:
+            out = out + params[col] * x
+        if f"{col}_sq" in params.index:
+            out = out + params[f"{col}_sq"] * x ** 2
+    add("Rc", None if R is None else (np.asarray(R, float) - consts["R_season"]) / C.RAIN_UNIT_MM)
+    add("Tc", None if T is None else np.asarray(T, float) - consts["T_season"])
+    add("Rec", None if Re is None else (np.asarray(Re, float) - consts["R_early"]) / C.RAIN_UNIT_MM)
+    add("Rlc", None if Rl is None else (np.asarray(Rl, float) - consts["R_late"]) / C.RAIN_UNIT_MM)
+    add("dry", dry)
+    return out
+
+
+def wild_cluster_wald(p: pd.DataFrame, outcome: str, rain: dict, terms: list) -> dict:
+    """Wild cluster restricted (WCR) bootstrap of the Wald test H0: beta_terms = 0 (q = len(terms)),
+    clusters = districts, Rademacher weights, CR covariance on the district-demeaned data (FWL; the
+    district effects are re-estimated implicitly). All 2^G sign vectors when G <=
+    WILD_ENUMERATE_MAX_CLUSTERS (exact), else N_WILD draws with BOOT_SEEDS['wild']. The CR small-sample
+    factor is a common constant and cancels in the p-value. For q = 1 this equals the bootstrap-t test."""
+    fe = FastFE(p, outcome, rain)
+    codes = fe.codes
+    cnt = np.bincount(codes)
+    Z = fe.X - np.column_stack([np.bincount(codes, fe.X[:, j]) / cnt for j in range(fe.X.shape[1])])[codes]
+    yz = fe.y - (np.bincount(codes, fe.y) / cnt)[codes]
+    J = [fe.cols.index(t) for t in terms]
+    keep = [i for i in range(Z.shape[1]) if i not in J]
+    br = np.linalg.lstsq(Z[:, keep], yz, rcond=None)[0]
+    yhat_r = Z[:, keep] @ br
+    u_r = yz - yhat_r
+    A = np.linalg.inv(Z.T @ Z)
+    G = cnt.size
+    ind = np.zeros((G, len(yz)))
+    ind[codes, np.arange(len(yz))] = 1.0
+    AJ = A[J]                                                     # q x k
+
+    def wald(Y):
+        Bh = A @ (Z.T @ Y)                                        # k x B
+        E = Y - Z @ Bh                                            # n x B
+        S = np.einsum("gn,nk,nb->gkb", ind, Z, E)                 # G x k x B  (cluster scores)
+        U = np.einsum("qk,gkb->gqb", AJ, S)                       # G x q x B
+        V = np.einsum("gqb,grb->bqr", U, U)                       # B x q x q
+        bJ = Bh[J].T                                              # B x q
+        return np.einsum("bq,bq->b", bJ, np.linalg.solve(V, bJ[..., None])[..., 0])
+
+    w0 = float(wald(yz[:, None])[0])
+    if G <= C.WILD_ENUMERATE_MAX_CLUSTERS:
+        Vs = 1.0 - 2.0 * ((np.arange(2 ** G)[None, :] >> np.arange(G)[:, None]) & 1)
+        how = f"all 2^{G} = {2 ** G} Rademacher sign vectors (exact)"
+    else:
+        Vs = np.random.default_rng(C.BOOT_SEEDS["wild"]).choice([-1.0, 1.0], size=(G, C.N_WILD))
+        how = f"{C.N_WILD} random Rademacher draws, seed {C.BOOT_SEEDS['wild']}"
+    out = []
+    for k0 in range(0, Vs.shape[1], 2048):                        # chunks keep memory small
+        V = Vs[:, k0:k0 + 2048]
+        out.append(wald(yhat_r[:, None] + u_r[:, None] * V[codes, :]))
+    wb = np.concatenate(out)
+    return {"wald": w0, "p": float(np.mean(wb >= w0 - 1e-12)), "clusters": G, "draws": how, "q": len(terms)}
+
+
+def boot_wald(draws: np.ndarray, point: np.ndarray) -> dict:
+    """Wald test H0: theta = 0 using the bootstrap covariance of theta (rows = replications):
+    W = theta' Cov_boot^-1 theta, p from chi2(q)."""
+    from scipy import stats
+    d = draws[np.isfinite(draws).all(axis=1)]
+    V = np.atleast_2d(np.cov(d, rowvar=False))
+    th = np.atleast_1d(point)
+    W = float(th @ np.linalg.solve(V, th))
+    return {"wald": W, "p": float(stats.chi2.sf(W, len(th))), "q": len(th), "n": int(len(d))}
 
 
 def boot_summary(draws: np.ndarray, point: float) -> dict:

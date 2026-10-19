@@ -1,4 +1,4 @@
-"""Step 7: diagnostics for the headline models (linear and quadratic in R_season, ln yield).
+"""Step 7: diagnostics for the headline models M1 (linear) and M2 (quadratic) in R and T (SPEC A13.2), ln yield.
 
 Usage: python src/07_diagnostics.py <panel.csv> <outdir>
 
@@ -13,7 +13,9 @@ Outputs (<outdir>/figures, tables, logs; prefix 07_diag):
   H0: corr = -0.5, district-clustered SE), Pesaran CD (cross-sectional dependence; added because
   districts share rainfall series)
 - influence: leverage, studentized residuals, Cook's distance, DFBETAS for rainfall terms
-- leave-one-district-out coefficient stability (table + figure)
+- leave-one-district-out coefficient stability (table + figure); 100 mm effect at mean R with T at its mean
+- multicollinearity between rainfall and temperature: within-district correlation of Rc and Tc, VIFs of the
+  regressors on district-demeaned data, and the condition number of the demeaned design
 """
 import numpy as np
 import pandas as pd
@@ -26,7 +28,7 @@ from statsmodels.stats.stattools import jarque_bera
 import pipeline_utils as U
 import config as C
 
-MODELS = ["linear", "quadratic"]
+MODELS = ["M1", "M2"]
 
 
 def lsdv(p: pd.DataFrame, rain: dict):
@@ -88,7 +90,7 @@ def main() -> None:
         # Tests
         exog_het = sm.add_constant(p[["trend"] + U.rain_terms(rain)])
         lm, lm_p, fval, f_p = het_breuschpagan(resid, exog_het)
-        test_rows.append({"model": name, "test": "Breusch-Pagan (resid^2 on trend + rainfall terms)",
+        test_rows.append({"model": name, "test": "Breusch-Pagan (resid^2 on trend + weather terms)",
                           "stat": lm, "p": lm_p, "note": f"LM; F version = {fval:.3f} (p = {f_p:.4f})"})
         for grp in ["district", "year"]:
             groups = [g.values for _, g in resid.groupby(p[grp].values)]
@@ -124,10 +126,13 @@ def main() -> None:
 
         # Leave-one-district-out
         rbar_all = p.groupby("district").R_season.mean().mean()
+        tbar_all = p.groupby("district").T_season.mean().mean()
+        cst = p.attrs["consts"]
         for d in [None] + list(dist_order):
             sub = p if d is None else p[p.district != d]
             r = U.fit_fe(sub, "ln_yield", rain)
-            pct, _ = U.effect(r.params, "ln_yield", {"R_season": (rbar_all, rbar_all - C.RAIN_SHOCK_MM)}, 1.0)
+            pct = np.exp(U.weather_lp(r.params, cst, R=rbar_all - C.RAIN_SHOCK_MM, T=tbar_all)
+                         - U.weather_lp(r.params, cst, R=rbar_all, T=tbar_all)) - 1
             row = {"model": name, "dropped": d or "(none)", "n": int(r.nobs), "trend": r.params["trend"],
                    "pct_100mm_at_mean_R": float(pct), "Rbar_used_mm": rbar_all}
             for c in U.rain_terms(rain):
@@ -150,10 +155,10 @@ def main() -> None:
                 f"{(m.student_resid.abs() > 3).sum()}; max leverage {m.leverage.max():.3f}")
         out.log(m.nlargest(8, "cooks_d")[["district", "year", "resid", "leverage", "student_resid", "cooks_d"] + dcols]
                 .to_string(index=False, float_format=lambda x: f"{x:.4f}"))
-    out.log("\nLEAVE-ONE-DISTRICT-OUT (100 mm effect at the full-sample mean of district mean R_season)")
+    out.log("\nLEAVE-ONE-DISTRICT-OUT (100 mm effect at the mean of district mean R_season, T at its mean)")
     for name in MODELS:
         m = lodo[lodo.model == name]
-        rcols = [c for c in m.columns if c.startswith("R_season") and m[c].notna().any()]
+        rcols = [c for c in m.columns if c.startswith(("Rc", "Tc")) and not c.startswith("se_") and m[c].notna().any()]
         out.log(f"[{name}]")
         out.log(m[["dropped", "n", "trend"] + rcols + ["pct_100mm_at_mean_R"]]
                 .to_string(index=False, float_format=lambda x: f"{x:.6g}"))
@@ -162,11 +167,34 @@ def main() -> None:
                 f"{100 * rest.pct_100mm_at_mean_R.max():+.2f}% (full sample "
                 f"{100 * m[m.dropped == '(none)'].pct_100mm_at_mean_R.iat[0]:+.2f}%)")
 
-    for df, nm in [(tests, "tests"), (infl, "influence"), (lodo, "leave_one_district_out")]:
+    # Multicollinearity between R and T (A13 step 3)
+    dm = p.copy()
+    cols = ["Rc", "Rc_sq", "Tc", "Tc_sq", "trend"]
+    for c in cols:
+        dm[c + "_w"] = dm[c] - dm.groupby("district")[c].transform("mean")
+    coll = []
+    for name in MODELS:
+        terms = ["trend"] + U.rain_terms(U.MODELS[name]["rain"])
+        Xw = dm[[t + "_w" for t in terms]].to_numpy()
+        for j, t in enumerate(terms):
+            y_, X_ = Xw[:, j], np.delete(Xw, j, axis=1)
+            b_ = np.linalg.lstsq(X_, y_, rcond=None)[0]
+            r2 = 1 - ((y_ - X_ @ b_) ** 2).sum() / (y_ ** 2).sum()
+            coll.append({"model": name, "term": t, "within_R2_on_others": r2, "VIF": 1 / (1 - r2)})
+        Xs = Xw / Xw.std(axis=0)
+        coll.append({"model": name, "term": "(condition number, standardised demeaned design)",
+                     "within_R2_on_others": np.nan, "VIF": float(np.linalg.cond(Xs))})
+    coll = pd.DataFrame(coll)
+    r_rt = dm.Rc_w.corr(dm.Tc_w)
+    out.log(f"\nMULTICOLLINEARITY R vs T: within-district corr(Rc, Tc) = {r_rt:.3f}; pooled corr = {p.Rc.corr(p.Tc):.3f}")
+    out.log(coll.to_string(index=False, float_format=lambda x: f"{x:.3f}"))
+    coll.loc[len(coll)] = {"model": "both", "term": "within corr(Rc, Tc)", "within_R2_on_others": np.nan, "VIF": r_rt}
+
+    for df, nm in [(tests, "tests"), (infl, "influence"), (lodo, "leave_one_district_out"), (coll, "collinearity")]:
         out.log(f"table -> {U.rel(out.table(df, nm))}")
 
     # ---- Figures ----
-    titles = {"linear": "Linear in R_season", "quadratic": "Quadratic in R_season"}
+    titles = {"M1": "M1 (linear in R and T)", "M2": "M2 (quadratic in R and T)"}
     fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
     for ax, name in zip(axes, MODELS):
         m = infl[infl.model == name]
@@ -230,7 +258,7 @@ def main() -> None:
         ax.set_ylim(-0.8, len(m) + 0.2)
         ax.text(100 * full, len(m) - 0.3, " full sample", color=U.INK2, fontsize=8, va="center")
         ax.set_yticks(y, m.dropped)
-        ax.set(title=titles[name], xlabel="Yield change for -100 mm at mean R_season (%)")
+        ax.set(title=titles[name], xlabel="Yield change for -100 mm at mean R_season, T at mean (%)")
     axes[0].set_ylabel("District dropped")
     fig.suptitle("Leave-one-district-out stability of the 100 mm effect", fontweight="bold", y=1.02)
     out.log(f"figure -> {U.rel(out.figure(fig, 'leave_one_district_out'))}")

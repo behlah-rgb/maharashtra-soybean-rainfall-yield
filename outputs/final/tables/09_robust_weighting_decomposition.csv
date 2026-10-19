@@ -1,0 +1,6 @@
+# FINAL: district-level gridded panel (panel_final.csv).
+weights,definition,b_Rc_per_100mm,b_Tc,pct_100mm
+unweighted,equal weights,0.06605480760351598,-0.19779826980657947,-0.06392044139164665
+area,area_kha,0.08371793770683823,-0.20233587716026163,-0.08030937043835873
+between_only,"district mean area, constant over time",0.0886513985990393,-0.1466468942414567,-0.08483545438311701
+within_only,area / district mean area,0.0632896640379043,-0.25801836827907915,-0.061328465081476824

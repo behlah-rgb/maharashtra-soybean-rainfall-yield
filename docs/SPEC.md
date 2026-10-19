@@ -117,3 +117,25 @@ A12.5 **Variables** (district d, year t; season = 1 Jun to 30 Sep, 122 days):
 - panel_final.csv: the panel_v1.csv columns plus dry_spell_max and T_season. Assert 13 x 18 = 234 rows, unique (district, year), no missing values.
 
 A12.6 **Validation (src/05b) before any model:** (a) gridded vs IMD subdivision R_season 2000-2015 (correlation, mean ratio); (b) old-district mean R_season vs area-weighted district normals (flag > 25%); (c) plausibility of T_season, units and missing cells; (d) corr(R_season, T_season), VIF, cross-district rainfall correlation and the effective number of independent rainfall signals; (e) descriptive yield vs R_season and yield by year including 2016-2017.
+
+## Amendments 2026-10-19 (team lead, A13; the team lead labelled this set "A12", renumbered here because A12 is already the weather-acquisition amendment). Fixed before any final model is run; not to be changed after seeing results.
+
+A13.1 **Crosswalk.** Washim -> Akola: CONFIRMED_OFFICIAL_PAGE; source column = team lead, from the Central Ground Water Board Washim document and the Akola district website (Washim carved from Akola on 1 July 1998). The Yavatmal mention in the teammate's report is the 1905 history; no adjustment to old Yeotmal. Jalna/Parbhani Partur caveat kept. Other rows keep "via teammate report, not independently verified". "MUMBAI SUB" = Mumbai Suburban accepted.
+
+A13.2 **Headline model set** (supersedes the rainfall-only headline models). ln(yield), district fixed effects, common linear trend (A6). Centring: Rc = (R_season - grand mean) / 100 (unit = 100 mm), Tc = T_season - grand mean (deg C), grand means over the panel's district-years, then squared. Coefficients are therefore per 100 mm and per 1 deg C (in M2: the marginal effect at the grand mean).
+- M1 linear: Rc, Tc.
+- M2 quadratic: Rc, Rc^2, Tc, Tc^2.
+- Exploratory only: timing model (R_early, R_late per 100 mm, centred; dry_spell_max; Tc); quadratic-in-rainfall-only (Rc, Rc^2, Tc).
+- Robustness outcome yield in kg/ha (M1_level, M2_level) kept from SPEC.
+- Linear vs quadratic = joint test of Rc^2 and Tc^2 (q = 2) under each A7/A11 method (district CR, wild cluster bootstrap, year CR, two-way CR, Driscoll-Kraay, MBB L = 3); headline rule A11.1 (INCONCLUSIVE -> M1 headline, M2 beside it, report the range).
+
+A13.3 **100 mm experiment.** Headline (variant A): T_season held at each district's mean (ceteris paribus). Exploratory variant B: T moves with rainfall, T_new = Tbar_d + s_d (R_new - Rbar_d), where s_d is district d's within-district OLS slope of T_season on R_season; s_d is re-estimated in every bootstrap replication. Both reported as percent change and kg/ha (baseline = district mean observed yield, A9). Weak-monsoon scenarios at 90% and 80% of each district's mean rainfall, both variants. Intervals: moving-block bootstrap over years (A7).
+
+A13.4 **Data quality, written before results.**
+- a. Diagnose first (src/05c_diagnose_ghats.py -> outputs/final/tables): every panel district-year with |R_season - district median| > 3 robust SD (robust SD = 1.4826 x MAD over the district's 18 years), plus Ratnagiri 2008, Raigad 2008, Pune 2005. Report: maximum daily cell value, cells over 300 mm/day, fill/sentinel values in the raw grid, gridded total vs IMD subdivision total (years <= 2015), and how imdlib treats missing-value sentinels.
+- b. If the cause is a processing bug: fix the build, document it, rebuild panel_final.csv, rerun src/05b, and STOP before any model.
+- c. If it is a property of the IMD data: keep all 13 districts in the primary run and add a column dq_flag. Rule (fixed now): dq_flag = 1 for every panel district-year meeting the screening criterion in (a) (|robust z| > 3), else 0; same rule for the 17-district wide panel.
+- d. Robustness (src/09): drop Kolhapur and Sangli; drop 2000-2003; drop dq_flag district-years; drop Akola, Parbhani, Osmanabad, Chandrapur (A10); year fixed effects instead of the trend (exploratory, allowed now that rainfall is district-level); the wide 17-district panel; area weighting; alternative rainfall windows; drop each drought year. The A2/A6 robustness runs stay. Cotton is out of scope.
+- e. Re-examine the sign of the trend now that 2016-2017 are included, and report it.
+
+A13.5 **To carry into the report.** About 2.6 effective independent rainfall signals (src/05b (d)); the 1-degree temperature grid (several districts share cells; 7 old districts contain no cell centre); IMD rainfall in the Western Ghats zone is less reliable.

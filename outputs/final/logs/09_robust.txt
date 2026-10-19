@@ -1,0 +1,109 @@
+============================================================================================
+FINAL: district-level gridded panel (panel_final.csv).
+============================================================================================
+Input panel: data/processed/panel_final.csv   Output folder: outputs/final
+Panel: 234 obs, 13 districts, 18 years (2000-2017), balanced=True, rainfall district-level=True, distinct R_season series=13
+Centring constants (main panel): {'R_season': 810.3879219648626, 'T_season': 27.447367183431663, 'R_early': 424.0716981586044, 'R_late': 386.31622380625805, 'R_julsep': 646.3798072211438}
+
+ROBUSTNESS: 100 mm deficit (T fixed), mean over districts at their own mean rainfall; 95% delta-method CI (year-clustered)
+
+[M1]
+                variant   n  districts  years     b_Rc    p_Rc    b_Tc    p_Tc  trend_coef  within_r2                  effect
+                   base 234         13     18  0.06605 0.05406 -0.1978  0.1803    -0.01717      0.204  -6.39% [-12.65, -0.13]
+   drop_kolhapur_sangli 198         11     18  0.08899 0.03234 -0.1746  0.2483    -0.02291     0.2523  -8.51% [-15.91, -1.12]
+         drop_2000_2003 182         13     14  0.06651  0.1008 -0.2154  0.2214   -0.006227     0.1771  -6.43% [-13.83, +0.96]
+           drop_dq_flag 231         13     18  0.06704 0.05339 -0.1974  0.1919    -0.01735     0.2012  -6.48% [-12.81, -0.16]
+drop_boundary_sensitive 162          9     18   0.0597 0.06944 -0.1888  0.2169    -0.01581     0.1711  -5.80% [-11.82, +0.23]
+                year_fe 234         13     18 -0.02064  0.4794 -0.2963  0.1774         NaN    0.08824   +2.09% [-3.74, +7.92]
+        wider_districts 306         17     18  0.04198 0.09951  -0.234 0.07696    -0.01319     0.1725   -4.11% [-8.88, +0.66]
+          area_weighted 234         13     18  0.08372 0.05391 -0.2023  0.2333    -0.02065     0.2406  -8.03% [-15.82, -0.24]
+        drop_small_area 228         13     18  0.06523 0.06028 -0.2032  0.1809    -0.01728     0.2006  -6.31% [-12.66, +0.03]
+             trend_none 234         13     18  0.05761  0.1008 -0.2649  0.1237         NaN     0.1731  -5.60% [-12.07, +0.87]
+         trend_district 234         13     18  0.06591 0.06551 -0.1941  0.2022         NaN     0.2482  -6.38% [-12.91, +0.15]
+          window_JunJul 234         13     18  0.09863 0.09151 -0.1906  0.2033    -0.01743     0.2127  -9.39% [-19.73, +0.94]
+          window_JulSep 234         13     18  0.07083  0.0221 -0.2455 0.07289    -0.01785     0.2072  -6.84% [-12.45, -1.23]
+          window_JunSep 234         13     18  0.06605 0.05406 -0.1978  0.1803    -0.01717      0.204  -6.39% [-12.65, -0.13]
+              drop_2009 221         13     17  0.06537 0.06572 -0.1777   0.327    -0.01758     0.1727  -6.33% [-12.81, +0.16]
+              drop_2014 221         13     17  0.06177 0.05273 -0.1131  0.4418    -0.01335     0.1292  -5.99% [-11.83, -0.15]
+              drop_2015 221         13     17  0.06345 0.05626 -0.1301  0.3975     -0.0116     0.1356  -6.15% [-12.23, -0.07]
+  range across variants: -9.39% (window_JunJul) to +2.09% (year_fe); base -6.39%
+
+[M2]
+                variant   n  districts  years    b_Rc      p_Rc     b_Tc   p_Tc   b_Rc_sq   p_Rc_sq  b_Tc_sq  p_Tc_sq  trend_coef  within_r2                   effect
+                   base 234         13     18 0.09578  0.003596  -0.1249 0.3214  -0.01115 0.0007908  -0.1198  0.06035    -0.01475     0.2876  -10.04% [-15.94, -4.14]
+   drop_kolhapur_sangli 198         11     18  0.1153  0.002821 -0.05686 0.6352  -0.01353 0.0001948  -0.1486   0.1426     -0.0179     0.3295  -11.81% [-18.53, -5.10]
+         drop_2000_2003 182         13     14 0.09698   0.01493  -0.1387 0.3522   -0.0113  0.002741  -0.1134    0.127   -0.006103     0.2611  -10.01% [-17.14, -2.89]
+           drop_dq_flag 231         13     18 0.09793  0.003013  -0.1208 0.3435  -0.01128  0.000647  -0.1208  0.05783    -0.01518     0.2864  -10.33% [-16.24, -4.41]
+drop_boundary_sensitive 162          9     18 0.08376  0.007537  -0.1393 0.3034  -0.01335   0.01053 -0.08251   0.2072    -0.01471     0.2493   -9.38% [-15.09, -3.67]
+                year_fe 234         13     18 0.02377    0.3024  0.03717 0.8704 -0.009596 1.095e-05 -0.07207   0.2047         NaN    0.09435    -3.20% [-7.57, +1.16]
+        wider_districts 306         17     18 0.07547   0.00138  -0.1849 0.1078 -0.009747 2.653e-05  -0.1033   0.0602    -0.01338     0.2696   -8.54% [-13.09, -3.99]
+          area_weighted 234         13     18  0.1049   0.01252 -0.09235 0.5125  -0.01265  0.006356  -0.1501   0.1327    -0.01657     0.3123  -10.97% [-18.36, -3.57]
+        drop_small_area 228         13     18 0.09508   0.00427  -0.1247 0.3391    -0.011  0.001178   -0.124  0.05991    -0.01445     0.2854   -9.98% [-15.95, -4.01]
+             trend_none 234         13     18 0.08951  0.005755  -0.1785 0.2069  -0.01147  0.001544  -0.1285   0.0357         NaN      0.265   -9.50% [-15.35, -3.65]
+         trend_district 234         13     18  0.0943  0.006995   -0.128 0.3344   -0.0106  0.001747  -0.1055   0.1081         NaN     0.3159   -9.87% [-16.18, -3.56]
+          window_JunJul 234         13     18  0.1785 2.111e-05  -0.1483 0.1493  -0.03695 8.175e-15  -0.1243 0.008903    -0.01145     0.3878 -19.01% [-25.97, -12.05]
+          window_JulSep 234         13     18 0.08998  0.008125  -0.1841  0.118 -0.008405   0.05064  -0.1304  0.04647    -0.01656     0.2546   -9.33% [-15.58, -3.09]
+          window_JunSep 234         13     18 0.09578  0.003596  -0.1249 0.3214  -0.01115 0.0007908  -0.1198  0.06035    -0.01475     0.2876  -10.04% [-15.94, -4.14]
+              drop_2009 221         13     17  0.1054  0.001749  -0.1296 0.3837  -0.01271 5.688e-05  -0.1516  0.06794    -0.01388     0.2725  -10.71% [-16.59, -4.82]
+              drop_2014 221         13     17 0.09315  0.002716  -0.0561 0.6527  -0.01122 0.0005526 -0.08862   0.1467    -0.01152     0.2084   -9.63% [-15.22, -4.04]
+              drop_2015 221         13     17 0.09013  0.004591 -0.07353 0.5656  -0.01022  0.002635  -0.1067   0.1151   -0.009395     0.2151   -9.28% [-15.00, -3.56]
+  range across variants: -19.01% (window_JunJul) to -3.20% (year_fe); base -10.04%
+
+Notes per variant:
+  base: M1/M2 as in src/06
+  drop_kolhapur_sangli: drops Kolhapur, Sangli
+  drop_2000_2003: drops 2000, 2001, 2002, 2003
+  drop_dq_flag: drops 3 rows: Buldhana 2002, Buldhana 2006, Buldhana 2013
+  drop_boundary_sensitive: drops Akola, Parbhani, Osmanabad, Chandrapur
+  year_fe: year fixed effects, no trend
+  wider_districts: adds Ahmednagar, Aurangabad, Nasik, Satara
+  area_weighted: weights = area_kha
+  drop_small_area: drops 6 rows with area < 20k ha
+  trend_none: no trend
+  trend_district: district-specific linear trends
+  window_JunJul: Rc from R_early (T stays Jun-Sep)
+  window_JulSep: Rc from R_julsep (T stays Jun-Sep)
+  window_JunSep: Rc from R_season (T stays Jun-Sep)
+  drop_2009: drops 2009
+  drop_2014: drops 2014
+  drop_2015: drops 2015
+Window variants: 100 mm is a larger share of a shorter window, so they are not directly comparable.
+table -> outputs/final/tables/09_robust_results.csv
+
+============================================================================================
+AREA-WEIGHTING INVESTIGATION (A9), M1 (Rc, Tc), 100 mm effect with T fixed
+============================================================================================
+Kish effective number of districts: 10.90 of 13; subdivision shares: Madhya Maharashtra 4.8%, Marathwada 30.0%, Vidarbha 65.2%; weight share of years > 2008: 61.9% (unweighted 50.0%)
+     weights                             definition  b_Rc_per_100mm     b_Tc  pct_100mm
+  unweighted                          equal weights        0.066055  -0.1978   -0.06392
+        area                               area_kha        0.083718 -0.20234  -0.080309
+between_only district mean area, constant over time        0.088651 -0.14665  -0.084835
+ within_only              area / district mean area         0.06329 -0.25802  -0.061328
+  district  b_Rc_district  se_year_CR        subdivision   share  pct_100mm_district   pct_lo    pct_hi
+     Akola         0.1084     0.05537           VIDARBHA  0.1344             -0.1027   -0.195 0.0001488
+ Amarawati         0.1601     0.05242           VIDARBHA  0.1106              -0.148  -0.2312  -0.05577
+ Osmanabad         0.1384      0.1053         MATATHWADA  0.1102             -0.1293  -0.2917   0.07034
+    Nagpur       -0.01215     0.07702           VIDARBHA 0.09518             0.01223  -0.1296    0.1772
+  Parbhani         0.1336     0.03637         MATATHWADA 0.09366              -0.125  -0.1852   -0.0604
+  Buldhana          0.121     0.05221           VIDARBHA 0.09072              -0.114  -0.2002  -0.01853
+   Yeotmal        0.09647     0.06341           VIDARBHA 0.08998            -0.09196  -0.1981    0.0282
+    Wardha        0.04739     0.03769           VIDARBHA 0.07131            -0.04629  -0.1142   0.02683
+    Nanded        0.07823     0.08241         MATATHWADA 0.06705            -0.07525  -0.2132   0.08687
+Chandrapur        0.03291     0.03895           VIDARBHA 0.05929            -0.03237  -0.1035    0.0444
+      Beed         0.1982      0.1034         MATATHWADA 0.02917             -0.1798  -0.3302  0.004439
+    Sangli       0.003962     0.04148 MADHYA MAHARASHTRA  0.0243           -0.003955 -0.08173   0.08041
+  Kolhapur       -0.02194     0.02447 MADHYA MAHARASHTRA 0.02407             0.02218 -0.02569    0.0724
+  unweighted mean of district slopes            b = 0.083429 -> 100 mm: -8.00%
+  area-share-weighted mean of district slopes   b = 0.094478 -> 100 mm: -9.02%
+  pooled unweighted (base)                      b = 0.066055 -> 100 mm: -6.39%
+  pooled area-weighted                          b = 0.083718 -> 100 mm: -8.03%
+  correlation(area share, district slope) = 0.380
+Weighted leave-one-district-out: 100 mm effect -8.66% to -6.75%
+figure -> outputs/final/figures/09_robust_area_weighting.png
+table -> outputs/final/tables/09_robust_weight_shares.csv
+table -> outputs/final/tables/09_robust_weighting_decomposition.csv
+table -> outputs/final/tables/09_robust_district_slopes.csv
+table -> outputs/final/tables/09_robust_weighted_leave_one_district_out.csv
+figure -> outputs/final/figures/09_robust_forest.png
+Results are associations under the model's assumptions, not causal effects.
+FINAL: district-level gridded panel (panel_final.csv).

@@ -41,5 +41,6 @@ Columns district, dist_code, subdivision, year, trend, area_kha, prod_kt, yield_
 | R_julsep | mm | same | Sum over 1 Jul-30 Sep. |
 | dry_spell_max | days | same | Longest run of consecutive days in 1 Jun-30 Sep with daily district-mean rainfall < 2.5 mm. |
 | T_season | deg C | IMD 1.0 deg daily Tmax and Tmin | Mean over 1 Jun-30 Sep of (district-mean Tmax + district-mean Tmin)/2. |
+| dq_flag | 0/1 | derived (SPEC A13.4c) | 1 if abs(R_season - district median) > 3 x 1.4826 x MAD of the district's R_season over 2000-2017. Added 2026-10-19; diagnosis in src/05c. |
 
 data/interim/old_district_weather.csv holds the same variables for all 26 old districts, plus Tmax_season, Tmin_season, rain_days_ge_2p5 and coverage diagnostics (minimum daily valid-area share, nearest-cell fallback days).

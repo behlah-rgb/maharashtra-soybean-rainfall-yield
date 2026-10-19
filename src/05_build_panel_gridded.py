@@ -15,7 +15,8 @@ overlapping cell is valid on a day, the nearest valid cell centre (to the distri
 point) is used and counted. Same method for 0.25 deg rainfall and 1.0 deg temperature; with 1.0 deg cells
 every touching cell contributes by its overlap share, so districts with few cell centres still get values.
 Variables (SPEC A12.5): R_season, R_early, R_late, R_julsep (mm), dry_spell_max (days with district-mean
-rain < DRY_DAY_MM, longest run in 1 Jun-30 Sep), T_season (mean of daily (Tmax + Tmin)/2, deg C).
+rain < DRY_DAY_MM, longest run in 1 Jun-30 Sep), T_season (mean of daily (Tmax + Tmin)/2, deg C),
+dq_flag (SPEC A13.4c: |R_season - district median| > 3 robust SD; diagnosis in src/05c).
 """
 import sys
 import warnings
@@ -30,7 +31,7 @@ import config as C  # noqa: E402
 PANEL_V1_COLS = ["district", "dist_code", "subdivision", "year", "trend",
                  "area_kha", "prod_kt", "yield_kgha", "ln_yield",
                  "R_season", "R_early", "R_late", "R_julsep"]
-NEW_COLS = ["dry_spell_max", "T_season"]
+NEW_COLS = ["dry_spell_max", "T_season", "dq_flag"]
 WEATHER_COLS = ["R_season", "R_early", "R_late", "R_julsep", "dry_spell_max", "T_season"]
 CROSSWALK_STATUSES = ("CONFIRMED_OFFICIAL_PAGE", "CAVEAT", "ALIAS_NAME_ONLY", "UNVERIFIED")
 
@@ -129,7 +130,8 @@ def build_crosswalk_and_dissolve(g):
             parent, status, note = r.current_district, "SAME_DISTRICT", "maps to itself"
         rows.append({"old_icrisat_district": parent, "current_district": r.current_district,
                      "layer_name": r.layer_name, "census2011_code": r.censuscode, "status": status,
-                     "note": note, "source": C.CROSSWALK_SOURCE_NOTE})
+                     "note": note,
+                     "source": C.CROSSWALK_SOURCE_OVERRIDES.get(r.current_district, C.CROSSWALK_SOURCE_NOTE)})
     xw = pd.DataFrame(rows).sort_values(["old_icrisat_district", "current_district"])
     assert set(xw.old_icrisat_district) == icrisat_names(), \
         f"old districts without polygons: {icrisat_names() - set(xw.old_icrisat_district)}"
@@ -240,6 +242,14 @@ def daily_district_means(var: str, year: int, w: pd.DataFrame, cells: pd.DataFra
     return pd.DataFrame(out, index=times), diag, v.attrs.get("units")
 
 
+def dq_flag(p: pd.DataFrame) -> pd.Series:
+    """SPEC A13.4c: 1 if |R_season - district median| > DQ_ROBUST_Z x 1.4826 x MAD (within district)."""
+    g = p.groupby("district").R_season
+    med = g.transform("median")
+    mad = g.transform(lambda s: np.median(np.abs(s - s.median())))
+    return ((p.R_season - med).abs() > C.DQ_ROBUST_Z * 1.4826 * mad).astype(int)
+
+
 def longest_run(mask: np.ndarray) -> int:
     best = cur = 0
     for m in mask:
@@ -330,6 +340,8 @@ def main() -> None:
         p["subdivision"] = p.district.map(dmap)
         p["ln_yield"] = np.log(p.yield_kgha)
         p["trend"] = p.year - C.TREND_BASE_YEAR
+        p["dq_flag"] = dq_flag(p)
+        print(f"  dq_flag (A13.4c) = 1 for: {p.loc[p.dq_flag == 1, ['district', 'year']].values.tolist()}")
         p = p[PANEL_V1_COLS + NEW_COLS].sort_values(["district", "year"]).reset_index(drop=True)
         n_t = C.YEAR_END_TARGET - C.YEAR_START + 1
         assert p.district.nunique() == n_d and len(p) == n_d * n_t, f"{dest.name}: {len(p)} rows != {n_d} x {n_t}"

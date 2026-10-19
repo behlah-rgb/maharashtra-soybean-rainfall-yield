@@ -76,9 +76,11 @@ def main() -> None:
     assert set(p.subdivision) <= set(SUB_ORDER), "unexpected subdivision in panel"
     print(OUT["header"])
     print(f"Panel: {len(p)} rows, {p.district.nunique()} districts, {p.year.min()}-{p.year.max()}")
+    district_level = U.rainfall_is_district_level(p)
+    vars_ = VARS + [v for v in ["T_season", "dry_spell_max"] if v in p.columns]   # final panel only
 
     # 1. Summary statistics.
-    summ = p[VARS].describe().T
+    summ = p[vars_].describe().T
     summ["cv"] = summ["std"] / summ["mean"]
     save_table(summ.reset_index(names="variable"), "eda_summary_stats.csv")
     print(summ.to_string(float_format="%.2f"))
@@ -123,12 +125,16 @@ def main() -> None:
            ylabel="Yield (kg/ha)")
     ax.set_ylim(bottom=0)
     ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(1.01, 1.0))
-    ax.text(1.02, 0.0, "Districts in a subdivision share one\nrainfall value per year, so points\nstack in vertical columns.",
-            transform=ax.transAxes, ha="left", va="bottom", fontsize=7.5, color=INK2)
+    if not district_level:
+        ax.text(1.02, 0.0, "Districts in a subdivision share one\nrainfall value per year, so points\nstack in vertical columns.",
+                transform=ax.transAxes, ha="left", va="bottom", fontsize=7.5, color=INK2)
     save_fig(fig, "eda_yield_vs_rseason.png")
 
     # 5. Rainfall series per subdivision with its mean (small multiples, shared y).
-    rain = p.drop_duplicates(["subdivision", "year"])[["subdivision", "year", "R_season", "R_early", "R_late"]]
+    if district_level:   # gridded panel: subdivision series = mean of its panel districts
+        rain = p.groupby(["subdivision", "year"], as_index=False)[["R_season", "R_early", "R_late"]].mean()
+    else:                # prototype: every district in a subdivision has the same IMD series
+        rain = p.drop_duplicates(["subdivision", "year"])[["subdivision", "year", "R_season", "R_early", "R_late"]]
     fig, axes = plt.subplots(1, 3, figsize=(12, 3.8), sharey=True)
     for ax, s in zip(axes, SUB_ORDER):
         q = rain[rain.subdivision == s]
@@ -140,11 +146,13 @@ def main() -> None:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=5))
     axes[0].set_ylabel("R_season, Jun-Sep rainfall (mm)")
     axes[0].set_ylim(bottom=0)
-    fig.suptitle("Jun-Sep rainfall by IMD subdivision, with period mean", fontweight="bold", y=1.02)
+    fig.suptitle("Jun-Sep rainfall by subdivision, with period mean"
+                 + (" (mean of the panel districts, gridded IMD)" if district_level else " (IMD subdivision series)"),
+                 fontweight="bold", y=1.02)
     save_fig(fig, "eda_rainfall_by_subdivision.png")
 
     # 6. Correlation matrix (pooled over district-years).
-    corr = p[VARS].corr()
+    corr = p[vars_].corr()
     save_table(corr.reset_index(names="variable"), "eda_correlation.csv")
     fig, ax = plt.subplots(figsize=(6.5, 5.5))
     sns.heatmap(corr, cmap=DIV, vmin=-1, vmax=1, annot=True, fmt=".2f", ax=ax, square=True,
@@ -185,6 +193,15 @@ def main() -> None:
     save_table(ctx, "eda_subdivision_rainfall_context.csv")
     print(f"\nRainfall per subdivision ({p.year.min()}-{p.year.max()}) and the {C.RAIN_SHOCK_MM:g} mm shock:")
     print(ctx.to_string(index=False, float_format="%.2f"))
+    if district_level:
+        dctx = p.groupby(["district", "subdivision"]).agg(R_mean_mm=("R_season", "mean"), R_sd_mm=("R_season", "std"),
+                                                         T_mean_C=("T_season", "mean"), T_sd_C=("T_season", "std"),
+                                                         dry_spell_mean_days=("dry_spell_max", "mean")).reset_index()
+        dctx["shock_in_sd"] = C.RAIN_SHOCK_MM / dctx.R_sd_mm
+        dctx["shock_pct_of_mean"] = 100 * C.RAIN_SHOCK_MM / dctx.R_mean_mm
+        save_table(dctx, "eda_district_weather_context.csv")
+        print(f"\nDistrict weather and the {C.RAIN_SHOCK_MM:g} mm shock:")
+        print(dctx.to_string(index=False, float_format="%.2f"))
 
 
 if __name__ == "__main__":

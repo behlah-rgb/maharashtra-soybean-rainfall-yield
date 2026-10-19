@@ -1,0 +1,103 @@
+============================================================================================
+FINAL: district-level gridded panel (panel_final.csv).
+============================================================================================
+Input panel: data/processed/panel_final.csv   Output folder: outputs/final
+Panel: 234 obs, 13 districts, 18 years (2000-2017), balanced=True, rainfall district-level=True, distinct R_season series=13
+
+DIAGNOSTIC TESTS
+model                                             test    stat      p                                                                                       note
+   M1 Breusch-Pagan (resid^2 on trend + weather terms) 12.5604 0.0057                                                         LM; F version = 4.349 (p = 0.0053)
+   M1   Brown-Forsythe equal variance across districts  1.5395 0.1115                                                                                  13 groups
+   M1       Brown-Forsythe equal variance across years  3.0327 0.0001                                                                                  18 groups
+   M1                            Jarque-Bera normality 19.1007 0.0001                                                            skew = -0.673, kurtosis = 3.381
+   M1   Wooldridge AR(1) serial correlation (H0: none) 18.9537 0.0009     F(1,12); coef on lagged FD resid = -0.207 (-0.5 under H0), district-clustered SE 0.067
+   M1     AR(1) corr of within residuals (descriptive)  0.2456    NaN biased towards -1/(T-1) under no autocorrelation (small T), so a positive value underst...
+   M1 Pesaran CD cross-sectional dependence (H0: none) 13.4893 0.0000                                              mean pairwise rho = 0.360, mean |rho| = 0.408
+   M2 Breusch-Pagan (resid^2 on trend + weather terms) 17.7413 0.0033                                                         LM; F version = 3.741 (p = 0.0028)
+   M2   Brown-Forsythe equal variance across districts  1.3599 0.1869                                                                                  13 groups
+   M2       Brown-Forsythe equal variance across years  2.6310 0.0007                                                                                  18 groups
+   M2                            Jarque-Bera normality 21.6035 0.0000                                                            skew = -0.648, kurtosis = 3.732
+   M2   Wooldridge AR(1) serial correlation (H0: none) 15.6595 0.0019     F(1,12); coef on lagged FD resid = -0.226 (-0.5 under H0), district-clustered SE 0.069
+   M2     AR(1) corr of within residuals (descriptive)  0.1936    NaN biased towards -1/(T-1) under no autocorrelation (small T), so a positive value underst...
+   M2 Pesaran CD cross-sectional dependence (H0: none) 12.5430 0.0000                                              mean pairwise rho = 0.335, mean |rho| = 0.399
+
+INFLUENCE (rule of thumb: Cook's D > 4/n = 0.0171; |student resid| > 3; |DFBETAS| > 2/sqrt(n) = 0.131)
+[M1] Cook's D > 4/n: 14 obs; |student resid| > 3: 1; max leverage 0.107
+  district  year   resid  leverage  student_resid  cooks_d  dfbetas_Rc  dfbetas_Tc
+    Nagpur  2013 -1.0919    0.0905        -2.6029   0.0411     -0.2058      0.2764
+      Beed  2008 -1.2467    0.0637        -2.9413   0.0355      0.2723      0.1601
+  Buldhana  2008 -1.3185    0.0558        -3.1046   0.0342      0.0246      0.0466
+      Beed  2015 -1.0920    0.0772        -2.5839   0.0340      0.1400     -0.1857
+Chandrapur  2013 -0.8707    0.1068        -2.0830   0.0319     -0.3376      0.1279
+    Nanded  2016 -1.0353    0.0755        -2.4435   0.0298     -0.2339     -0.0067
+   Yeotmal  2013 -0.8941    0.0955        -2.1264   0.0294     -0.1660      0.2569
+     Akola  2008 -1.1868    0.0573        -2.7849   0.0286      0.1096      0.0969
+[M2] Cook's D > 4/n: 14 obs; |student resid| > 3: 2; max leverage 0.332
+ district  year   resid  leverage  student_resid  cooks_d  dfbetas_Rc  dfbetas_Tc  dfbetas_Rc_sq  dfbetas_Tc_sq
+ Buldhana  2008 -1.3702    0.0565        -3.4117   0.0369      0.0071      0.0316         0.0408         0.0843
+   Nanded  2016 -1.1301    0.0779        -2.8230   0.0362     -0.2798     -0.0357         0.0703         0.1192
+     Beed  2008 -1.0738    0.0763        -2.6752   0.0319      0.3487      0.1808        -0.3106         0.0461
+     Beed  2013  0.8601    0.1102         2.1711   0.0319     -0.1237     -0.4145        -0.0619         0.3543
+     Beed  2015 -0.8941    0.0995        -2.2452   0.0304      0.2436     -0.1261        -0.3436         0.0996
+    Akola  2008 -1.2118    0.0580        -3.0020   0.0297      0.1126      0.0925        -0.0143         0.0782
+Osmanabad  2006 -1.1547    0.0607        -2.8594   0.0284     -0.0030      0.1478         0.0722        -0.0781
+  Yeotmal  2013 -0.8155    0.1085        -2.0544   0.0281     -0.0727      0.2523        -0.2077         0.1459
+
+LEAVE-ONE-DISTRICT-OUT (100 mm effect at the mean of district mean R_season, T at its mean)
+[M1]
+   dropped   n      trend        Rc        Tc  pct_100mm_at_mean_R
+    (none) 234 -0.0171746 0.0660548 -0.197798           -0.0639204
+     Akola 216 -0.0165803 0.0629323  -0.20144           -0.0609929
+ Amarawati 216 -0.0170547 0.0560276 -0.225805            -0.054487
+  Buldhana 216 -0.0193226 0.0653159  -0.18146           -0.0632285
+Chandrapur 216 -0.0155027 0.0735476 -0.191731           -0.0709081
+    Nagpur 216 -0.0159594 0.0673724 -0.231726            -0.065153
+    Wardha 216 -0.0159678 0.0657242 -0.213495           -0.0636109
+   Yeotmal 216  -0.015788 0.0613672 -0.213455           -0.0595222
+      Beed 216 -0.0168402 0.0631198 -0.165966            -0.061169
+    Nanded 216 -0.0150723 0.0676964 -0.179618           -0.0654559
+ Osmanabad 216 -0.0191339 0.0637459 -0.191661           -0.0617566
+  Parbhani 216 -0.0164199 0.0604582 -0.198524           -0.0586669
+  Kolhapur 216 -0.0213392 0.0849622 -0.179185            -0.081453
+    Sangli 216 -0.0183146 0.0687639 -0.195009           -0.0664529
+  range of 100 mm effect across drops: -8.15% to -5.45% (full sample -6.39%)
+[M2]
+   dropped   n      trend        Rc         Tc       Rc_sq     Tc_sq  pct_100mm_at_mean_R
+    (none) 234 -0.0147456 0.0957836  -0.124917  -0.0111488 -0.119775            -0.101414
+     Akola 216 -0.0143706 0.0947686  -0.128955  -0.0110557 -0.113285            -0.100417
+ Amarawati 216 -0.0145332 0.0876578  -0.149337  -0.0111384 -0.118657           -0.0940727
+  Buldhana 216 -0.0169878 0.0965638  -0.108061  -0.0110065 -0.117382            -0.101987
+Chandrapur 216 -0.0134743 0.0899097  -0.133567  -0.0144394 -0.101775           -0.0990893
+    Nagpur 216 -0.0137729 0.0934069  -0.159765   -0.010231   -0.1122           -0.0984483
+    Wardha 216 -0.0131112 0.0963565   -0.15366  -0.0114049 -0.131079            -0.102158
+   Yeotmal 216 -0.0136719 0.0919669  -0.152017  -0.0105219 -0.121452           -0.0974118
+      Beed 216 -0.0145673 0.0948601 -0.0753094 -0.00997602 -0.142509           -0.0995279
+    Nanded 216 -0.0130425 0.0992775  -0.116315  -0.0109874 -0.114562            -0.104403
+ Osmanabad 216 -0.0165746 0.0952357   -0.11775  -0.0109066 -0.118243            -0.100703
+  Parbhani 216 -0.0145642 0.0923535  -0.131926    -0.01063 -0.111748           -0.0978582
+  Kolhapur 216 -0.0181948  0.101183  -0.111981  -0.0110682 -0.111926             -0.10618
+    Sangli 216 -0.0145559   0.11024 -0.0769272  -0.0131021 -0.147362            -0.116038
+  range of 100 mm effect across drops: -11.60% to -9.41% (full sample -10.14%)
+
+MULTICOLLINEARITY R vs T: within-district corr(Rc, Tc) = -0.485; pooled corr = 0.062
+model                                             term  within_R2_on_others   VIF
+   M1                                            trend                0.096 1.106
+   M1                                               Rc                0.255 1.343
+   M1                                               Tc                0.308 1.446
+   M1 (condition number, standardised demeaned design)                  NaN 1.870
+   M2                                            trend                0.104 1.116
+   M2                                               Rc                0.366 1.577
+   M2                                            Rc_sq                0.161 1.192
+   M2                                               Tc                0.337 1.508
+   M2                                            Tc_sq                0.046 1.049
+   M2 (condition number, standardised demeaned design)                  NaN 2.099
+table -> outputs/final/tables/07_diag_tests.csv
+table -> outputs/final/tables/07_diag_influence.csv
+table -> outputs/final/tables/07_diag_leave_one_district_out.csv
+table -> outputs/final/tables/07_diag_collinearity.csv
+figure -> outputs/final/figures/07_diag_resid_vs_fitted.png
+figure -> outputs/final/figures/07_diag_qq.png
+figure -> outputs/final/figures/07_diag_resid_by_year.png
+figure -> outputs/final/figures/07_diag_resid_by_district.png
+figure -> outputs/final/figures/07_diag_leave_one_district_out.png
+FINAL: district-level gridded panel (panel_final.csv).

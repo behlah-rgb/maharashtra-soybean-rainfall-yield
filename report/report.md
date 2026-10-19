@@ -28,8 +28,9 @@
      eda_yield_vs_rseason.png, eda_correlation_matrix.png. -->
 
 ### 1.5 Model formulation
-<!-- docs/SPEC.md (models; A3 timing models; A6 trend). Linear and quadratic in R_season with district effects and a
-     common linear trend; ln(yield) outcome; yield in kg/ha as robustness outcome. -->
+<!-- docs/SPEC.md A13.2 (supersedes the rainfall-only models): M1 linear in Rc, Tc; M2 quadratic in Rc, Tc (centred at
+     grand means; per 100 mm and per deg C); district effects + common linear trend (A6); ln(yield); kg/ha robustness
+     outcome; exploratory timing and rain-only-quadratic models. Headline rule A11.1 (06_models_linear_vs_quadratic.csv). -->
 
 ### 1.6 Statistical and causal assumptions
 <!-- docs/SPEC.md (A6, A7). Strict exogeneity of rainfall given district effects and trend; what fixed effects do and do
@@ -63,6 +64,7 @@
 ## 3 Numerical experiments
 
 ### 3.1 100 mm deficit
+<!-- A13.3: variant A (T fixed) is the headline; variant B (T moves with R) exploratory. Summary: docs/RESULTS_SUMMARY.md. -->
 <!-- src/08_scenario_100mm.py -> outputs/final/tables/08_scenario_results.csv (scenario = deficit_100mm; district,
      subdivision and state rows; MBB L = 3 headline intervals, L = 2/4 and district bootstrap as checks; timing models:
      deficit_100mm_split main, single windows sensitivity, timing_quad exploratory);
@@ -89,6 +91,9 @@
      outputs/final/tables/06_models_loyo_by_year.csv (leave one year out). -->
 
 ### 4.3 Robustness (windows, weighting, standard errors, boundary variants)
+<!-- Data quality (A13.4): src/05c_diagnose_ghats.py -> outputs/final/tables/05c_cases.csv, 05c_imdlib_masking.csv,
+     05c_sentinel_scan.csv; validation outputs/tables/validation_*.csv. Carry A13.5 caveats (2.6 rainfall signals,
+     1-degree temperature grid, Western Ghats rainfall reliability). -->
 <!-- Windows, sample, trend, drought years, wider district set, boundary variant (drop Akola, Parbhani, Osmanabad,
      Chandrapur): src/09_robustness.py -> outputs/final/tables/09_robust_results.csv, 09_robust_skipped.csv,
      outputs/final/figures/09_robust_forest.png.

@@ -140,7 +140,8 @@ DISTRICT_CROSSWALK = [
     ("Palghar", "Thane", "CONFIRMED_OFFICIAL_PAGE", _SRC),
     ("Washim", "Akola", "CONFIRMED_OFFICIAL_PAGE",
      "verified by the team lead (2026-10-19) from two official sources: Central Ground Water Board Washim "
-     "district document; Akola district website history page (Washim carved from Akola on 1 July 1998)"),
+     "district document; Akola district website history page (Washim carved from Akola on 1 July 1998). "
+     "The Yavatmal mention in the teammate's report is the 1905 history; no adjustment to old Yeotmal (A13.1)"),
     # A11: renames, same boundaries.
     ("Dharashiv", "Osmanabad", "ALIAS_NAME_ONLY", "rename of Osmanabad; same boundary (A11)"),
     ("Chhatrapati Sambhajinagar", "Aurangabad", "ALIAS_NAME_ONLY", "rename of Aurangabad; same boundary (A11)"),
@@ -193,3 +194,17 @@ SEASON_START_MMDD, SEASON_END_MMDD = "06-01", "09-30"
 EARLY_END_MMDD = "07-31"                     # R_early = Jun-Jul; R_late = Aug-Sep; R_julsep = Jul-Sep
 DRY_DAY_MM = 2.5
 VALIDATION_NORMAL_TOL = 0.25                 # flag old districts off the normals by more than 25%
+
+# ---- A13 (2026-10-19) -------------------------------------------------------------------------
+# Per-row override of the crosswalk "source" column (all other rows: CROSSWALK_SOURCE_NOTE).
+CROSSWALK_SOURCE_OVERRIDES = {
+    "Washim": ("source: team lead, from the Central Ground Water Board Washim document and the Akola district "
+               "website (Washim carved from Akola on 1 July 1998)"),
+}
+DQ_ROBUST_Z = 3.0                 # dq_flag screen: |R_season - district median| > 3 x 1.4826 x MAD
+DQ_EXTRA_CASES = [("Ratnagiri", 2008), ("Raigad", 2008), ("Pune", 2005)]
+DQ_DAILY_CELL_MM = 300.0          # diagnostic: cell-days above this daily rainfall
+RAIN_UNIT_MM = 100.0              # Rc = (R_season - grand mean) / RAIN_UNIT_MM
+EXCLUDE_GHATS_DISTRICTS = ["Kolhapur", "Sangli"]
+EARLY_YEARS_DROP = [2000, 2001, 2002, 2003]
+DQ_FLAGS_FILE = DATA_INTERIM / "dq_flags.csv"

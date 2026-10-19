@@ -1,0 +1,16 @@
+# FINAL: district-level gridded panel (panel_final.csv).
+model,test,stat,p,note
+M1,Breusch-Pagan (resid^2 on trend + weather terms),12.560381841019964,0.005690514207553867,LM; F version = 4.349 (p = 0.0053)
+M1,Brown-Forsythe equal variance across districts,1.5395334640294838,0.11152333512039166,13 groups
+M1,Brown-Forsythe equal variance across years,3.032666180668862,9.213563555698447e-05,18 groups
+M1,Jarque-Bera normality,19.10073140253206,7.117522943541242e-05,"skew = -0.673, kurtosis = 3.381"
+M1,Wooldridge AR(1) serial correlation (H0: none),18.953665053836648,0.0009389053560594377,"F(1,12); coef on lagged FD resid = -0.207 (-0.5 under H0), district-clustered SE 0.067"
+M1,AR(1) corr of within residuals (descriptive),0.24559096685626972,,"biased towards -1/(T-1) under no autocorrelation (small T), so a positive value understates it"
+M1,Pesaran CD cross-sectional dependence (H0: none),13.489286533220614,1.8084207317742313e-41,"mean pairwise rho = 0.360, mean |rho| = 0.408"
+M2,Breusch-Pagan (resid^2 on trend + weather terms),17.741271424000804,0.003288768477672849,LM; F version = 3.741 (p = 0.0028)
+M2,Brown-Forsythe equal variance across districts,1.3598544108104105,0.1868719869386581,13 groups
+M2,Brown-Forsythe equal variance across years,2.6310434906922415,0.000663983331429979,18 groups
+M2,Jarque-Bera normality,21.603512811702142,2.0363705051448886e-05,"skew = -0.648, kurtosis = 3.732"
+M2,Wooldridge AR(1) serial correlation (H0: none),15.659523490649459,0.0019028714110454095,"F(1,12); coef on lagged FD resid = -0.226 (-0.5 under H0), district-clustered SE 0.069"
+M2,AR(1) corr of within residuals (descriptive),0.1935659950328205,,"biased towards -1/(T-1) under no autocorrelation (small T), so a positive value understates it"
+M2,Pesaran CD cross-sectional dependence (H0: none),12.542956146948239,4.3448013258684575e-36,"mean pairwise rho = 0.335, mean |rho| = 0.399"

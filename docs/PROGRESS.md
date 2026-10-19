@@ -162,3 +162,45 @@ Format for each entry:
 - Why: to check the gridded panel against independent sources before any model (SPEC A12.6).
 - Result: (a) gridded vs IMD subdivision R_season, 2000-2015: Vidarbha r = 0.972, ratio 1.029; Marathwada 0.964, 1.020; Madhya Maharashtra 0.884, 0.925; Konkan & Goa 0.759, 0.952 (IMD includes Goa). (b) Flagged > 25% off the normals: Kolhapur 0.634 (panel), Pune 1.320, Ahmednagar 1.264 (not in panel); the other panel districts are within 0.86-1.08. (c) T_season 25.1-29.3 deg C, warmest Yeotmal/Chandrapur/Wardha (28.2-28.3), coolest Sangli/Kolhapur (25.7-26.0); Tmax > Tmin everywhere; no missing cells. (d) corr(R_season, T_season) pooled 0.062, within district -0.485; VIF <= 1.50 (within); mean cross-district rainfall correlation 0.54; participation ratio 2.56 effective signals, 5 components for 90% of variance, first component 59%. (e) 2016 mean yield 1278 kg/ha and 2017 1118 kg/ha, recovering from 606 (2014) and 592 (2015).
 - Problems / deviations: Kolhapur fails the normals check; Western Ghats anomalies in the gridded rainfall (Ratnagiri/Raigad 2008, Pune/Satara 2005). Reported, not changed. Stopped before any model, as instructed; src/06-09 not run on panel_final.
+
+## 2026-10-19 - A13 step 1: amendments, src/05c diagnosis, dq_flag
+- Done: SPEC A13 (team lead's second "A12", renumbered); config (source override, dq settings); src/05c_diagnose_ghats.py written and run (outputs/final/tables/05c_*.csv, outputs/final/logs/05c_diagnose_ghats.txt); dq_flag added to src/05 and panels rebuilt; 05c and 05b rerun.
+- Why: A13.4a requires diagnosing before models. 05c reads raw bytes independently of imdlib and src/05, so a processing bug would show as a mismatch.
+- Result: no processing bug (A13.4c). dq_flag = 1 for Buldhana 2002/2006/2013 (13-district panel) plus Nasik 2005 and Satara 2005 (wide). Weather values unchanged.
+- Problems / deviations: the screen flags plausible Buldhana wet years and misses the Ghats districts; applied as written and flagged.
+
+## 2026-10-19 - A13 step 2: src/06 on panel_final (outputs/final)
+- Done: pipeline_utils gets the A13 model catalogue (M1, M2, M1_level, M2_level, timing, M2_rain_only), centred columns (Rc per 100 mm, Tc per deg C), weather_lp() for scenarios, wild_cluster_wald() (joint WCR Wald, exact 2^13 enumeration) and boot_wald() (MBB Wald with bootstrap covariance). 06 rewritten and run: python src/06_models_final.py data/processed/panel_final.csv outputs/final.
+- Why: the joint test (q = 2) matches A13.2. The wild Wald for q = 1 reproduces the earlier bootstrap-t exactly (W = t^2 = 16.48), and its cluster-robust Wald differs from linearmodels only by the constant small-sample factor (0.979), which cancels in the bootstrap p.
+- Result: verdict QUADRATIC SUPPORTED for ln (all six methods p <= 0.002; MBB L2/L4 also < 0.001) and for kg/ha (p <= 0.02). Headline by rule A11.1 = M2. M2: Rc 0.0958, Rc^2 -0.01115, Tc -0.1249, Tc^2 -0.1198; rainfall turning point 1240 mm, temperature 26.9 deg C. Trend with 2016-17: -0.0147 (M2), -0.0172 (M1), year-CR p 0.11-0.12, MBB CI spans zero; on 2000-2015 it was -0.024 to -0.035. LOYO kg/ha: M2 468.6 smeared vs trend-only 478.9 (better); M1 514.2 (worse).
+- Problems / deviations: none. Runtime ~3 s.
+
+## 2026-10-19 - A13 step 3: src/07 on panel_final (outputs/final)
+- Done: 07 updated to M1/M2 (leave-one-district-out effect = 100 mm deficit at mean R with T at its mean; new R-T multicollinearity table 07_diag_collinearity.csv) and run.
+- Why: A13 step 3 asks for diagnostics on the headline models plus a check of R vs T collinearity.
+- Result: Breusch-Pagan p = 0.003 (M2); residual variance differs across years (p = 0.0007), not across districts (p = 0.19); Jarque-Bera p < 0.001 (skew -0.65); Wooldridge AR(1) F(1,12) = 15.7, p = 0.002; Pesaran CD = 12.5, p < 0.001. Influence: 14 obs over 4/n; max leverage Chandrapur 2013 (wettest year, 1855 mm; Cook's D only 0.006). Leave-one-district-out 100 mm effect: M2 -11.6% to -9.4% (full -10.1%), M1 -8.2% to -5.4% (full -6.4%). Collinearity: within corr(Rc, Tc) = -0.485, VIF <= 1.58, condition number 2.1.
+- Problems / deviations: none.
+
+## 2026-10-19 - A13 step 4: src/08 on panel_final (outputs/final)
+- Done: 08 rewritten for A13.3 (variants A/B, s_d re-estimated per replication, weak monsoon 90/80%, exploratory M2_rain_only and timing split, range curve with T at panel mean); headline model read from 06's verdict table; run.
+- Why: reading the verdict from 06's output keeps the headline choice in code (A11.1).
+- Result: HEADLINE (M2, variant A, mean of 13 districts): 100 mm deficit -10.04% [MBB L3 -15.18, -4.29]; -117.2 kg/ha [-176.6, -50.7]. M1 (sensitivity) -6.4% [-12.0, +1.3]. Variant B: M2 -11.8% [-16.1, -6.4]. Weak monsoon M2-A: 90% -7.3% [-11.6, -2.4]; 80% -15.3% [-23.1, -6.2]. Within-district slope of T on R: -0.07 to -0.21 deg C per 100 mm. Runtime ~4.5 s.
+- Problems / deviations: none.
+
+## 2026-10-19 - A13 step 5: src/09 on panel_final (outputs/final)
+- Done: 09 rewritten for M1/M2 (17 variants incl. all of A13.4d, A2, A6, windows, drought years) and the area-weighting investigation updated to Rc/Tc; run with --wide-panel panel_final_wide.csv.
+- Why: the summary is the same quantity as the headline in 08 (mean over districts, T fixed). Intervals are delta-method, year-clustered, because weighted, year-FE and district-trend fits are not covered by the fast bootstrap estimator; the headline MBB intervals are in 08.
+- Result: M2 range across variants -19.0% (Jun-Jul window, a different quantity) to -3.2% (year FE); excluding windows and year FE, -11.8% (drop Kolhapur+Sangli) to -8.5% (wider 17 districts); base -10.0% [-15.9, -4.1]. M1 range -9.4% to +2.1% (year FE); base -6.4% [-12.7, -0.1]. Year FE: M2 -3.2% [-7.6, +1.2], M1 +2.1% [-3.7, +7.9]; Rc^2 stays significant (p = 1e-5). Area weighting: M1 -6.4% -> -8.0%; between-district weights alone -8.5%, within-district alone -6.1%; Kish N 10.9.
+- Problems / deviations: the year-FE result is a major caveat (flagged).
+
+## 2026-10-19 - A13 step 6: src/03 on panel_final (outputs/final)
+- Done: 03 adapted to district-level rainfall (subdivision series = mean of panel districts when rainfall is district-level; the "shared series" note only for the prototype; adds T_season/dry_spell_max to the summary and correlation when present; new eda_district_weather_context.csv) and run into outputs/final.
+- Why: the report's data section draws on these; the prototype branch is kept unchanged.
+- Result: 0 yield outliers > 3 SD within district (max |z| 2.92 on ln yield); a 100 mm cut = 0.36-0.77 SD of district R_season (8.0-22.8% of the district mean).
+- Problems / deviations: none.
+
+## 2026-10-19 - A13 step 7: RESULTS_SUMMARY, HANDOFF, docs
+- Done: src/10_results_summary.py writes docs/RESULTS_SUMMARY.md from outputs/final tables (each number followed by its source file); HANDOFF, README, data dictionary (dq_flag), report skeleton comments (A13 model set) updated.
+- Why: CLAUDE.md rule 2 (every number from code); generating the summary from the tables avoids hand-copied numbers.
+- Result: summary written (117 lines). Stopped before report prose, as instructed. Nothing committed.
+- Problems / deviations: the team lead's second "A12" was recorded as A13 to keep SPEC labels unique.

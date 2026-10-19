@@ -1,0 +1,7 @@
+# FINAL panel data-quality diagnosis (src/05c). Descriptive; no model.
+year,raw_minus999_cells,imdlib_nan_cells,nan_equals_minus999,unmasked_values_identical_to_raw,raw_unique_negatives
+2002,4544615,4544615,True,True,[-999.0]
+2006,4544615,4544615,True,True,[-999.0]
+2013,4544615,4544615,True,True,[-999.0]
+2008,4557066,4557066,True,True,[-999.0]
+2005,4544615,4544615,True,True,[-999.0]

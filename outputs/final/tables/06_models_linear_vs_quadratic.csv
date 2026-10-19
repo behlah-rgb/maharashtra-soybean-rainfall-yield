@@ -1,0 +1,4 @@
+# FINAL: district-level gridded panel (panel_final.csv).
+linear_model,quadratic_model,verdict,headline_model,sensitivity_model,report_range_across_both,p_district_CR,p_year_CR,p_twoway_CR,p_driscoll_kraay,p_wild_district,p_MBB_L3,p_MBB_L2,p_MBB_L4,p_classical_F,aic_linear,aic_quadratic
+M1,M2,QUADRATIC SUPPORTED (squared terms significant under every method),M2,M1,False,2.5972413806441746e-06,4.7055947685863323e-07,4.4772437183646074e-05,5.546873709082333e-06,0.001953125,2.6379151504598427e-05,3.167036978132369e-05,1.899874848719459e-05,6.250616886502315e-06,301.24412015845905,279.28132096442545
+M1_level,M2_level,QUADRATIC SUPPORTED (squared terms significant under every method),M2_level,M1_level,False,8.975202337332953e-05,2.9590755320798928e-05,0.0023232433361043644,7.771292730450634e-12,0.020263671875,4.173760063129965e-07,1.2695424367540355e-05,1.0623805441296113e-08,0.00018385484412247716,3489.8040320964446,3475.1677434247254

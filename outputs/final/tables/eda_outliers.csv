@@ -1,0 +1,2 @@
+# FINAL: district-level gridded panel (panel_final.csv).
+district,subdivision,year,area_kha,yield_kgha,z_yield,ln_yield,z_ln_yield,R_season
