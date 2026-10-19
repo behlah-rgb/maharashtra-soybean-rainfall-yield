@@ -3,7 +3,8 @@ PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no tempera
 ============================================================================================
 Input panel: data/processed/panel_v1.csv   Output folder: outputs/prototype
 Panel: 208 obs, 13 districts, 16 years (2000-2015), balanced=True, rainfall district-level=False, distinct R_season series=3
-District means used (Rbar in mm, Ybar in kg/ha), and the early-window share of the 100 mm split:
+Percent is the headline unit; kg/ha baseline = district mean observed yield over the panel years.
+District means used (Rbar in mm, Ybar = kg/ha baseline), and the early-window share of the split:
   district        subdivision  R_season  R_early  R_late  Ybar_kgha  share_early
      Akola           VIDARBHA   960.888  507.331 453.556   1075.510        0.528
  Amarawati           VIDARBHA   960.888  507.331 453.556    999.281        0.528
@@ -18,138 +19,140 @@ Chandrapur           VIDARBHA   960.888  507.331 453.556    943.668        0.528
     Sangli MADHYA MAHARASHTRA   801.438  411.325 390.113   1784.692        0.513
     Wardha           VIDARBHA   960.888  507.331 453.556    962.087        0.528
    Yeotmal           VIDARBHA   960.888  507.331 453.556    984.481        0.528
-Bootstrap over years: 1000 reps done
-Bootstrap over districts: 1000 reps done
+Bootstrap L3: 2000 reps, seed 2803
+Bootstrap L2: 2000 reps, seed 2802
+Bootstrap L4: 2000 reps, seed 2804
+Bootstrap districts: 2000 reps, seed 2810
 
-SCENARIO RESULTS - subdivision and state rows (unweighted means of districts).
-Brackets: 95% bootstrap over years [..] and over districts {..}.
-          model                 scenario                label               unit  Rbar_season_mm         pct [years CI] {districts CI}         kg/ha [years CI]
-         linear            deficit_100mm                 main MADHYA MAHARASHTRA           801.4     -9.9% [-16.3, -2.4] {-14.4, -5.1}   -187.7 [-309.9, -46.5]
-         linear            deficit_100mm                 main         MATATHWADA           622.1     -9.9% [-16.3, -2.4] {-14.4, -5.1}   -103.7 [-171.2, -25.7]
-         linear            deficit_100mm                 main           VIDARBHA           960.9     -9.9% [-16.3, -2.4] {-14.4, -5.1}    -98.7 [-162.9, -24.4]
-         linear            deficit_100mm                 main      ALL DISTRICTS           832.1     -9.9% [-16.3, -2.4] {-14.4, -5.1}   -113.9 [-188.1, -28.2]
-         linear       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4     -8.0% [-13.3, -2.0] {-11.7, -4.1}   -152.0 [-252.7, -37.3]
-         linear       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1      -6.3% [-10.5, -1.5] {-9.2, -3.2}    -65.8 [-110.1, -16.1]
-         linear       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -9.5% [-15.7, -2.4] {-13.9, -4.9}    -95.0 [-157.1, -23.5]
-         linear       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1     -8.3% [-13.7, -2.0] {-12.1, -4.3}    -94.8 [-157.3, -23.3]
-         linear       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4    -15.4% [-24.8, -3.9] {-22.1, -8.0}   -291.8 [-471.7, -73.9]
-         linear       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1    -12.1% [-19.9, -3.0] {-17.6, -6.3}   -127.5 [-208.6, -31.9]
-         linear       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9    -18.1% [-29.0, -4.6] {-25.8, -9.6}   -181.0 [-289.5, -46.4]
-         linear       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1    -15.9% [-25.5, -4.0] {-22.7, -8.3}   -181.6 [-292.6, -46.2]
-      quadratic            deficit_100mm                 main MADHYA MAHARASHTRA           801.4    -13.5% [-20.2, -4.4] {-17.5, -9.3}   -256.6 [-382.9, -82.9]
-      quadratic            deficit_100mm                 main         MATATHWADA           622.1   -17.7% [-27.0, -2.5] {-21.8, -12.9}   -186.3 [-283.3, -25.8]
-      quadratic            deficit_100mm                 main           VIDARBHA           960.9     -9.6% [-16.7, -2.0] {-14.1, -4.0}    -95.4 [-166.6, -20.3]
-      quadratic            deficit_100mm                 main      ALL DISTRICTS           832.1    -12.7% [-18.4, -4.4] {-16.8, -8.3}   -148.2 [-215.8, -51.1]
-      quadratic       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4    -10.8% [-16.1, -3.6] {-14.2, -7.3}   -204.8 [-305.7, -68.0]
-      quadratic       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1    -11.1% [-17.3, -1.8] {-13.9, -8.0}   -117.0 [-181.1, -18.9]
-      quadratic       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -9.2% [-16.0, -1.9] {-13.6, -3.8}    -91.4 [-160.2, -19.3]
-      quadratic       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1    -10.0% [-14.9, -3.6] {-13.6, -6.0}   -116.7 [-172.9, -39.9]
-      quadratic       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4   -21.8% [-31.9, -6.7] {-27.6, -15.7}  -414.4 [-606.7, -127.0]
-      quadratic       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1   -21.9% [-33.0, -2.4] {-26.7, -16.0}   -230.0 [-346.6, -25.0]
-      quadratic       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9   -19.6% [-29.7, -6.3] {-27.1, -10.6}   -195.5 [-297.0, -62.7]
-      quadratic       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1   -20.6% [-29.6, -7.1] {-26.8, -14.0}   -239.8 [-345.0, -81.6]
-   linear_level            deficit_100mm                 main MADHYA MAHARASHTRA           801.4       -4.3% [-8.3, +0.1] {-6.8, -1.7}     -80.6 [-156.3, +2.4]
-   linear_level            deficit_100mm                 main         MATATHWADA           622.1     -7.7% [-14.9, +0.2] {-12.3, -3.0}     -80.6 [-156.3, +2.4]
-   linear_level            deficit_100mm                 main           VIDARBHA           960.9     -8.1% [-15.7, +0.2] {-13.0, -3.2}     -80.6 [-156.3, +2.4]
-   linear_level            deficit_100mm                 main      ALL DISTRICTS           832.1     -7.4% [-14.3, +0.2] {-11.8, -2.9}     -80.6 [-156.3, +2.4]
-   linear_level       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4       -3.4% [-6.6, +0.1] {-5.5, -1.3}     -64.6 [-125.2, +2.0]
-   linear_level       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1       -4.8% [-9.3, +0.1] {-7.7, -1.9}      -50.1 [-97.2, +1.5]
-   linear_level       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -7.8% [-15.1, +0.2] {-12.5, -3.1}     -77.4 [-150.1, +2.3]
-   linear_level       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1      -6.2% [-12.0, +0.2] {-9.9, -2.4}     -67.0 [-130.0, +2.0]
-   linear_level       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4     -6.8% [-13.2, +0.2] {-10.9, -2.7}    -129.1 [-250.5, +3.9]
-   linear_level       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1     -9.6% [-18.6, +0.3] {-15.3, -3.8}    -100.2 [-194.4, +3.0]
-   linear_level       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9    -15.6% [-30.2, +0.5] {-25.0, -6.2}    -154.8 [-300.3, +4.7]
-   linear_level       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1    -12.4% [-24.0, +0.4] {-19.8, -4.9}    -134.1 [-260.0, +4.1]
-quadratic_level            deficit_100mm                 main MADHYA MAHARASHTRA           801.4      -6.3% [-10.6, -0.9] {-8.8, -4.3}   -119.7 [-199.8, -16.9]
-quadratic_level            deficit_100mm                 main         MATATHWADA           622.1   -16.0% [-27.9, -0.0] {-21.0, -12.5}    -167.5 [-291.7, -0.5]
-quadratic_level            deficit_100mm                 main           VIDARBHA           960.9     -7.8% [-16.5, +0.4] {-12.8, -2.1}     -77.1 [-163.9, +4.4]
-quadratic_level            deficit_100mm                 main      ALL DISTRICTS           832.1    -10.1% [-16.7, -1.7] {-14.4, -6.2}   -111.5 [-184.7, -18.5]
-quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4       -5.0% [-8.3, -0.7] {-7.0, -3.3}    -93.8 [-156.5, -13.7]
-quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1     -9.7% [-16.7, -0.1] {-12.8, -7.5}    -101.1 [-174.4, -1.5]
-quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -7.4% [-15.9, +0.5] {-12.3, -1.9}     -73.6 [-158.3, +4.6]
-quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1     -7.7% [-13.0, -1.2] {-11.3, -4.2}    -85.2 [-143.0, -13.5]
-quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4    -10.8% [-18.1, -1.5] {-14.8, -7.8}   -204.7 [-342.7, -27.6]
-quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1   -20.3% [-35.6, +0.3] {-26.8, -16.0}    -212.5 [-372.5, +3.1]
-quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9    -17.3% [-31.5, -1.6] {-26.4, -7.7}   -171.8 [-312.9, -15.7]
-quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1   -17.2% [-28.5, -2.7] {-24.4, -10.9}   -189.4 [-315.0, -27.9]
-  timing_linear      deficit_100mm_split main timing scenario MADHYA MAHARASHTRA           801.4     -9.8% [-16.5, -2.0] {-14.9, -5.0}   -186.0 [-314.4, -38.6]
-  timing_linear      deficit_100mm_split main timing scenario         MATATHWADA           622.1     -9.8% [-16.4, -2.0] {-15.3, -4.5}   -102.4 [-171.7, -20.8]
-  timing_linear      deficit_100mm_split main timing scenario           VIDARBHA           960.9     -9.8% [-16.6, -2.1] {-14.8, -5.1}    -97.9 [-165.9, -20.8]
-  timing_linear      deficit_100mm_split main timing scenario      ALL DISTRICTS           832.1     -9.8% [-16.5, -2.0] {-15.0, -5.0}   -112.9 [-190.4, -23.2]
-  timing_linear deficit_100mm_early_only          sensitivity MADHYA MAHARASHTRA           801.4    -10.2% [-23.0, -1.7] {-17.6, -3.9}   -193.9 [-436.6, -32.1]
-  timing_linear deficit_100mm_early_only          sensitivity         MATATHWADA           622.1    -10.2% [-23.0, -1.7] {-17.6, -3.9}   -107.2 [-241.3, -17.7]
-  timing_linear deficit_100mm_early_only          sensitivity           VIDARBHA           960.9    -10.2% [-23.0, -1.7] {-17.6, -3.9}   -102.0 [-229.6, -16.9]
-  timing_linear deficit_100mm_early_only          sensitivity      ALL DISTRICTS           832.1    -10.2% [-23.0, -1.7] {-17.6, -3.9}   -117.7 [-265.0, -19.5]
-  timing_linear  deficit_100mm_late_only          sensitivity MADHYA MAHARASHTRA           801.4     -9.4% [-19.0, +1.8] {-20.6, +1.7}   -177.6 [-360.8, +33.5]
-  timing_linear  deficit_100mm_late_only          sensitivity         MATATHWADA           622.1     -9.4% [-19.0, +1.8] {-20.6, +1.7}    -98.2 [-199.4, +18.5]
-  timing_linear  deficit_100mm_late_only          sensitivity           VIDARBHA           960.9     -9.4% [-19.0, +1.8] {-20.6, +1.7}    -93.4 [-189.7, +17.6]
-  timing_linear  deficit_100mm_late_only          sensitivity      ALL DISTRICTS           832.1     -9.4% [-19.0, +1.8] {-20.6, +1.7}   -107.8 [-219.0, +20.3]
-    timing_quad      deficit_100mm_split    EXPLORATORY model MADHYA MAHARASHTRA           801.4    -11.4% [-17.9, +0.1] {-14.7, -7.7}    -216.6 [-339.8, +2.2]
-    timing_quad      deficit_100mm_split    EXPLORATORY model         MATATHWADA           622.1    -11.2% [-22.8, +6.2] {-14.4, -7.7}   -117.4 [-238.8, +64.9]
-    timing_quad      deficit_100mm_split    EXPLORATORY model           VIDARBHA           960.9    -11.0% [-18.1, -1.3] {-16.3, -5.2}   -110.1 [-181.0, -13.3]
-    timing_quad      deficit_100mm_split    EXPLORATORY model      ALL DISTRICTS           832.1    -11.1% [-17.0, -0.3] {-14.8, -7.2}    -128.7 [-197.5, -3.4]
-    timing_quad deficit_100mm_early_only          sensitivity MADHYA MAHARASHTRA           801.4  -24.1% [-31.1, -14.6] {-29.9, -15.3}  -457.3 [-591.2, -277.3]
-    timing_quad deficit_100mm_early_only          sensitivity         MATATHWADA           622.1  -32.4% [-42.6, -21.8] {-39.2, -21.2}  -339.9 [-446.9, -229.2]
-    timing_quad deficit_100mm_early_only          sensitivity           VIDARBHA           960.9   -16.7% [-23.0, -4.4] {-21.3, -10.3}   -166.8 [-230.1, -43.5]
-    timing_quad deficit_100mm_early_only          sensitivity      ALL DISTRICTS           832.1  -22.7% [-29.4, -12.8] {-28.1, -14.5}  -264.8 [-343.5, -152.1]
-    timing_quad  deficit_100mm_late_only          sensitivity MADHYA MAHARASHTRA           801.4    +5.2% [-11.7, +30.6] {-5.5, +14.4}   +99.6 [-222.3, +582.1]
-    timing_quad  deficit_100mm_late_only          sensitivity         MATATHWADA           622.1   +13.9% [-13.3, +60.4] {-0.2, +28.8}  +145.9 [-139.4, +634.1]
-    timing_quad  deficit_100mm_late_only          sensitivity           VIDARBHA           960.9    -3.3% [-14.7, +11.6] {-12.9, +4.2}   -32.8 [-147.3, +115.6]
-    timing_quad  deficit_100mm_late_only          sensitivity      ALL DISTRICTS           832.1    +3.3% [-12.0, +26.8] {-7.1, +12.1}   +42.6 [-136.8, +321.7]
+SCENARIO RESULTS - subdivision and state rows (unweighted means of districts); kg/ha baseline = district mean observed yield over the panel years.
+Brackets: 95% moving-block bootstrap over years, L = 3 [..] (headline); district bootstrap {..} (check); L = [2, 4] as sensitivity.
+          model                 scenario                label               unit  Rbar_season_mm              pct [MBB L3] {districts}         MBB L2         MBB L4           kg/ha [MBB L3]
+         linear            deficit_100mm                 main MADHYA MAHARASHTRA           801.4     -9.9% [-15.4, +0.8] {-14.3, -5.2}  [-17.0, +0.7]  [-15.6, -1.2]   -187.7 [-293.0, +14.9]
+         linear            deficit_100mm                 main         MATATHWADA           622.1     -9.9% [-15.4, +0.8] {-14.3, -5.2}  [-17.0, +0.7]  [-15.6, -1.2]    -103.7 [-161.9, +8.2]
+         linear            deficit_100mm                 main           VIDARBHA           960.9     -9.9% [-15.4, +0.8] {-14.3, -5.2}  [-17.0, +0.7]  [-15.6, -1.2]     -98.7 [-154.1, +7.8]
+         linear            deficit_100mm                 main      ALL DISTRICTS           832.1     -9.9% [-15.4, +0.8] {-14.3, -5.2}  [-17.0, +0.7]  [-15.6, -1.2]    -113.9 [-177.9, +9.0]
+         linear       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4     -8.0% [-12.6, +0.6] {-11.6, -4.2}  [-13.9, +0.6]  [-12.7, -0.9]   -152.0 [-238.7, +11.9]
+         linear       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1       -6.3% [-9.9, +0.5] {-9.1, -3.3}  [-11.0, +0.4]  [-10.0, -0.7]     -65.8 [-103.9, +5.1]
+         linear       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -9.5% [-14.9, +0.8] {-13.8, -5.0}  [-16.4, +0.7]  [-15.0, -1.1]     -95.0 [-148.5, +7.5]
+         linear       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1     -8.3% [-13.0, +0.7] {-12.0, -4.3}  [-14.4, +0.6]  [-13.1, -1.0]     -94.8 [-148.7, +7.4]
+         linear       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4    -15.4% [-23.5, +1.3] {-21.9, -8.2}  [-25.9, +1.2]  [-23.8, -1.9]   -291.8 [-447.3, +23.9]
+         linear       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1    -12.1% [-18.8, +1.0] {-17.4, -6.4}  [-20.7, +0.9]  [-19.0, -1.5]   -127.5 [-197.5, +10.2]
+         linear       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9    -18.1% [-27.5, +1.5] {-25.6, -9.7}  [-30.1, +1.4]  [-27.8, -2.2]   -181.0 [-274.9, +15.1]
+         linear       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1    -15.9% [-24.2, +1.3] {-22.5, -8.5}  [-26.6, +1.2]  [-24.5, -1.9]   -181.6 [-277.6, +14.9]
+      quadratic            deficit_100mm                 main MADHYA MAHARASHTRA           801.4    -13.5% [-19.6, -2.5] {-17.5, -9.1}  [-20.2, -1.2]  [-19.2, -6.0]   -256.6 [-371.9, -47.9]
+      quadratic            deficit_100mm                 main         MATATHWADA           622.1   -17.7% [-25.9, -2.7] {-21.7, -12.7}  [-26.2, -0.2]  [-24.8, -8.7]   -186.3 [-271.5, -28.3]
+      quadratic            deficit_100mm                 main           VIDARBHA           960.9     -9.6% [-15.4, +0.7] {-14.1, -4.3}  [-17.0, +0.4]  [-15.4, -0.9]     -95.4 [-154.3, +7.0]
+      quadratic            deficit_100mm                 main      ALL DISTRICTS           832.1    -12.7% [-18.5, -2.1] {-16.8, -8.2}  [-19.2, -1.0]  [-18.3, -5.1]   -148.2 [-215.9, -25.4]
+      quadratic       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4    -10.8% [-15.8, -1.9] {-14.1, -7.2}  [-16.3, -1.0]  [-15.4, -4.7]   -204.8 [-300.2, -36.7]
+      quadratic       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1    -11.1% [-16.5, -1.9] {-13.8, -7.9}  [-16.7, -0.2]  [-15.7, -5.4]   -117.0 [-173.5, -19.6]
+      quadratic       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -9.2% [-14.9, +0.7] {-13.5, -4.0}  [-16.3, +0.5]  [-14.9, -0.7]     -91.4 [-148.8, +7.1]
+      quadratic       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1    -10.0% [-14.8, -1.3] {-13.6, -6.1}  [-15.6, -0.8]  [-14.7, -3.4]   -116.7 [-172.4, -17.1]
+      quadratic       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4   -21.8% [-30.9, -4.5] {-27.5, -15.2}  [-31.6, -1.9] [-30.1, -10.7]   -414.4 [-586.3, -85.5]
+      quadratic       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1   -21.9% [-31.6, -3.4] {-26.6, -15.8}  [-31.9, +0.2] [-30.2, -10.7]   -230.0 [-331.5, -35.3]
+      quadratic       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9   -19.6% [-29.0, -0.8] {-26.9, -11.0}  [-31.0, -0.4]  [-29.3, -4.7]    -195.5 [-290.0, -8.3]
+      quadratic       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1   -20.6% [-29.5, -3.7] {-26.7, -13.6}  [-30.4, -1.9]  [-28.9, -8.9]   -239.8 [-341.9, -43.2]
+   linear_level            deficit_100mm                 main MADHYA MAHARASHTRA           801.4       -4.3% [-8.0, +1.2] {-6.8, -1.7}   [-8.9, +1.2]   [-8.2, +0.1]    -80.6 [-152.3, +22.9]
+   linear_level            deficit_100mm                 main         MATATHWADA           622.1     -7.7% [-14.5, +2.2] {-12.2, -3.1}  [-16.0, +2.2]  [-14.9, +0.3]    -80.6 [-152.3, +22.9]
+   linear_level            deficit_100mm                 main           VIDARBHA           960.9     -8.1% [-15.3, +2.3] {-12.9, -3.3}  [-16.9, +2.3]  [-15.7, +0.3]    -80.6 [-152.3, +22.9]
+   linear_level            deficit_100mm                 main      ALL DISTRICTS           832.1     -7.4% [-14.0, +2.1] {-11.7, -3.0}  [-15.4, +2.1]  [-14.3, +0.2]    -80.6 [-152.3, +22.9]
+   linear_level       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4       -3.4% [-6.4, +1.0] {-5.4, -1.4}   [-7.1, +1.0]   [-6.6, +0.1]    -64.6 [-122.0, +18.4]
+   linear_level       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1       -4.8% [-9.0, +1.4] {-7.6, -1.9}  [-10.0, +1.3]   [-9.3, +0.2]     -50.1 [-94.7, +14.3]
+   linear_level       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -7.8% [-14.7, +2.2] {-12.4, -3.2}  [-16.2, +2.2]  [-15.1, +0.3]    -77.4 [-146.3, +22.0]
+   linear_level       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1      -6.2% [-11.7, +1.8] {-9.8, -2.5}  [-12.9, +1.7]  [-12.0, +0.2]    -67.0 [-126.7, +19.1]
+   linear_level       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4     -6.8% [-12.9, +1.9] {-10.8, -2.8}  [-14.2, +1.9]  [-13.2, +0.2]   -129.1 [-244.1, +36.8]
+   linear_level       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1     -9.6% [-18.1, +2.7] {-15.2, -3.9}  [-20.0, +2.7]  [-18.5, +0.3]   -100.2 [-189.5, +28.5]
+   linear_level       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9    -15.6% [-29.5, +4.4] {-24.8, -6.3}  [-32.5, +4.4]  [-30.1, +0.5]   -154.8 [-292.6, +44.1]
+   linear_level       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1    -12.4% [-23.4, +3.5] {-19.7, -5.0}  [-25.8, +3.5]  [-24.0, +0.4]   -134.1 [-253.4, +38.2]
+quadratic_level            deficit_100mm                 main MADHYA MAHARASHTRA           801.4      -6.3% [-10.7, -0.7] {-8.7, -4.3}  [-10.9, +0.0]  [-10.9, -2.7]   -119.7 [-202.3, -13.9]
+quadratic_level            deficit_100mm                 main         MATATHWADA           622.1   -16.0% [-27.6, -2.6] {-20.8, -12.4}  [-27.4, +1.0]  [-27.3, -8.5]   -167.5 [-289.3, -26.9]
+quadratic_level            deficit_100mm                 main           VIDARBHA           960.9     -7.8% [-15.0, +2.2] {-12.7, -2.1}  [-17.0, +2.1]  [-15.3, +0.6]    -77.1 [-148.5, +21.4]
+quadratic_level            deficit_100mm                 main      ALL DISTRICTS           832.1    -10.1% [-17.2, -0.6] {-14.2, -6.3}  [-17.7, +0.4]  [-17.6, -3.8]    -111.5 [-188.9, -7.3]
+quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4       -5.0% [-8.4, -0.5] {-6.8, -3.3}   [-8.5, +0.1]   [-8.6, -2.1]     -93.8 [-158.3, -9.0]
+quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE         MATATHWADA           622.1     -9.7% [-16.6, -1.6] {-12.5, -7.5}  [-16.5, +0.4]  [-16.5, -5.2]   -101.1 [-173.9, -16.6]
+quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE           VIDARBHA           960.9     -7.4% [-14.3, +2.1] {-12.2, -1.9}  [-16.3, +2.0]  [-14.7, +0.7]    -73.6 [-142.3, +21.1]
+quadratic_level       weak_monsoon_90pct         ILLUSTRATIVE      ALL DISTRICTS           832.1     -7.7% [-13.4, -0.1] {-11.3, -4.4}  [-14.1, +0.4]  [-13.7, -2.1]     -85.2 [-146.8, -1.5]
+quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE MADHYA MAHARASHTRA           801.4    -10.8% [-18.3, -1.6] {-14.6, -7.8}  [-18.6, +0.1]  [-18.4, -5.0]   -204.7 [-346.1, -29.4]
+quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE         MATATHWADA           622.1   -20.3% [-35.1, -3.1] {-26.4, -15.8}  [-34.8, +1.4] [-34.6, -10.8]   -212.5 [-367.7, -32.7]
+quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE           VIDARBHA           960.9    -17.3% [-31.2, +1.9] {-26.4, -7.7}  [-33.7, +2.1]  [-32.1, -2.2]   -171.8 [-310.0, +19.3]
+quadratic_level       weak_monsoon_80pct         ILLUSTRATIVE      ALL DISTRICTS           832.1   -17.2% [-29.2, -1.2] {-24.2, -11.1}  [-30.0, +0.7]  [-30.0, -6.8]   -189.4 [-321.5, -14.2]
+  timing_linear      deficit_100mm_split main timing scenario MADHYA MAHARASHTRA           801.4     -9.8% [-15.8, +0.2] {-15.0, -5.0}  [-17.5, +0.4]  [-16.0, -1.7]    -186.0 [-300.3, +4.6]
+  timing_linear      deficit_100mm_split main timing scenario         MATATHWADA           622.1     -9.8% [-15.6, +0.2] {-15.3, -4.8}  [-17.3, +0.4]  [-15.7, -1.8]    -102.4 [-164.1, +2.2]
+  timing_linear      deficit_100mm_split main timing scenario           VIDARBHA           960.9     -9.8% [-16.0, +0.3] {-14.9, -5.1}  [-17.6, +0.3]  [-16.2, -1.7]     -97.9 [-159.4, +2.9]
+  timing_linear      deficit_100mm_split main timing scenario      ALL DISTRICTS           832.1     -9.8% [-15.7, +0.2] {-15.1, -4.9}  [-17.6, +0.4]  [-16.0, -1.7]    -112.9 [-181.5, +2.8]
+  timing_linear deficit_100mm_early_only          sensitivity MADHYA MAHARASHTRA           801.4    -10.2% [-22.1, +2.4] {-18.4, -3.9}  [-24.3, +1.7]  [-23.0, +0.9]   -193.9 [-420.0, +45.2]
+  timing_linear deficit_100mm_early_only          sensitivity         MATATHWADA           622.1    -10.2% [-22.1, +2.4] {-18.4, -3.9}  [-24.3, +1.7]  [-23.0, +0.9]   -107.2 [-232.1, +25.0]
+  timing_linear deficit_100mm_early_only          sensitivity           VIDARBHA           960.9    -10.2% [-22.1, +2.4] {-18.4, -3.9}  [-24.3, +1.7]  [-23.0, +0.9]   -102.0 [-220.8, +23.8]
+  timing_linear deficit_100mm_early_only          sensitivity      ALL DISTRICTS           832.1    -10.2% [-22.1, +2.4] {-18.4, -3.9}  [-24.3, +1.7]  [-23.0, +0.9]   -117.7 [-254.9, +27.4]
+  timing_linear  deficit_100mm_late_only          sensitivity MADHYA MAHARASHTRA           801.4     -9.4% [-18.9, +3.0] {-20.5, +1.7}  [-19.4, +4.4]  [-19.2, -0.5]   -177.6 [-359.9, +56.9]
+  timing_linear  deficit_100mm_late_only          sensitivity         MATATHWADA           622.1     -9.4% [-18.9, +3.0] {-20.5, +1.7}  [-19.4, +4.4]  [-19.2, -0.5]    -98.2 [-198.9, +31.4]
+  timing_linear  deficit_100mm_late_only          sensitivity           VIDARBHA           960.9     -9.4% [-18.9, +3.0] {-20.5, +1.7}  [-19.4, +4.4]  [-19.2, -0.5]    -93.4 [-189.2, +29.9]
+  timing_linear  deficit_100mm_late_only          sensitivity      ALL DISTRICTS           832.1     -9.4% [-18.9, +3.0] {-20.5, +1.7}  [-19.4, +4.4]  [-19.2, -0.5]   -107.8 [-218.4, +34.5]
+    timing_quad      deficit_100mm_split    EXPLORATORY model MADHYA MAHARASHTRA           801.4    -11.4% [-18.2, -1.1] {-14.9, -7.6}  [-18.0, -0.1]  [-16.7, -4.1]   -216.6 [-345.1, -20.6]
+    timing_quad      deficit_100mm_split    EXPLORATORY model         MATATHWADA           622.1    -11.2% [-23.6, +2.1] {-14.5, -7.5}  [-21.8, +4.5]  [-21.5, -0.8]   -117.4 [-248.0, +22.0]
+    timing_quad      deficit_100mm_split    EXPLORATORY model           VIDARBHA           960.9    -11.0% [-18.0, -0.6] {-16.2, -5.4}  [-19.3, -0.0]  [-16.9, -2.3]    -110.1 [-179.9, -5.8]
+    timing_quad      deficit_100mm_split    EXPLORATORY model      ALL DISTRICTS           832.1    -11.1% [-17.3, -1.0] {-14.9, -7.0}  [-17.6, +0.1]  [-16.2, -3.8]   -128.7 [-200.7, -12.4]
+    timing_quad deficit_100mm_early_only          sensitivity MADHYA MAHARASHTRA           801.4  -24.1% [-30.4, -10.3] {-29.7, -14.0} [-30.6, -11.0] [-30.1, -13.0]  -457.3 [-576.6, -194.8]
+    timing_quad deficit_100mm_early_only          sensitivity         MATATHWADA           622.1  -32.4% [-39.3, -16.8] {-39.2, -18.9} [-41.1, -17.6] [-39.4, -19.7]  -339.9 [-412.7, -176.4]
+    timing_quad deficit_100mm_early_only          sensitivity           VIDARBHA           960.9    -16.7% [-22.9, -4.2] {-21.3, -9.5}  [-23.3, -2.9]  [-22.4, -5.1]   -166.8 [-228.3, -42.2]
+    timing_quad deficit_100mm_early_only          sensitivity      ALL DISTRICTS           832.1   -22.7% [-28.8, -9.6] {-27.9, -13.3}  [-29.0, -9.8] [-28.6, -11.8]  -264.8 [-336.1, -112.5]
+    timing_quad  deficit_100mm_late_only          sensitivity MADHYA MAHARASHTRA           801.4    +5.2% [-14.6, +29.4] {-6.2, +14.4} [-13.0, +30.4] [-12.9, +26.5]   +99.6 [-277.5, +559.5]
+    timing_quad  deficit_100mm_late_only          sensitivity         MATATHWADA           622.1   +13.9% [-18.0, +52.7] {-1.2, +28.7} [-14.6, +57.2] [-14.6, +48.5]  +145.9 [-189.2, +553.1]
+    timing_quad  deficit_100mm_late_only          sensitivity           VIDARBHA           960.9    -3.3% [-14.9, +11.4] {-13.3, +4.2} [-15.6, +13.0]  [-14.0, +8.6]   -32.8 [-148.4, +113.6]
+    timing_quad  deficit_100mm_late_only          sensitivity      ALL DISTRICTS           832.1    +3.3% [-14.0, +25.7] {-7.6, +11.8} [-12.7, +26.1] [-12.6, +22.6]   +42.6 [-161.6, +305.9]
 
-SCENARIO RESULTS - districts, headline models, 100 mm deficit:
-    model      scenario label       unit  Rbar_season_mm        pct [years CI] {districts CI}        kg/ha [years CI]
-   linear deficit_100mm  main      Akola           960.9    -9.9% [-16.3, -2.4] {-14.4, -5.1}  -106.3 [-175.4, -26.3]
-   linear deficit_100mm  main  Amarawati           960.9    -9.9% [-16.3, -2.4] {-14.4, -5.1}   -98.7 [-163.0, -24.4]
-   linear deficit_100mm  main       Beed           622.1    -9.9% [-16.3, -2.4] {-14.4, -5.1}   -97.0 [-160.1, -24.0]
-   linear deficit_100mm  main   Buldhana           960.9    -9.9% [-16.3, -2.4] {-14.4, -5.1}  -112.4 [-185.6, -27.8]
-   linear deficit_100mm  main Chandrapur           960.9    -9.9% [-16.3, -2.4] {-14.4, -5.1}   -93.2 [-153.9, -23.1]
-   linear deficit_100mm  main   Kolhapur           801.4    -9.9% [-16.3, -2.4] {-14.4, -5.1}  -199.1 [-328.7, -49.3]
-   linear deficit_100mm  main     Nagpur           960.9    -9.9% [-16.3, -2.4] {-14.4, -5.1}   -87.9 [-145.1, -21.8]
-   linear deficit_100mm  main     Nanded           622.1    -9.9% [-16.3, -2.4] {-14.4, -5.1}  -100.3 [-165.7, -24.8]
-   linear deficit_100mm  main  Osmanabad           622.1    -9.9% [-16.3, -2.4] {-14.4, -5.1}  -105.6 [-174.4, -26.2]
-   linear deficit_100mm  main   Parbhani           622.1    -9.9% [-16.3, -2.4] {-14.4, -5.1}  -111.9 [-184.8, -27.7]
-   linear deficit_100mm  main     Sangli           801.4    -9.9% [-16.3, -2.4] {-14.4, -5.1}  -176.3 [-291.1, -43.7]
-   linear deficit_100mm  main     Wardha           960.9    -9.9% [-16.3, -2.4] {-14.4, -5.1}   -95.1 [-156.9, -23.5]
-   linear deficit_100mm  main    Yeotmal           960.9    -9.9% [-16.3, -2.4] {-14.4, -5.1}   -97.3 [-160.6, -24.1]
-quadratic deficit_100mm  main      Akola           960.9    -9.6% [-16.7, -2.0] {-14.1, -4.0}  -102.8 [-179.4, -21.8]
-quadratic deficit_100mm  main  Amarawati           960.9    -9.6% [-16.7, -2.0] {-14.1, -4.0}   -95.5 [-166.6, -20.3]
-quadratic deficit_100mm  main       Beed           622.1  -17.7% [-27.0, -2.5] {-21.8, -12.9}  -174.2 [-264.9, -24.1]
-quadratic deficit_100mm  main   Buldhana           960.9    -9.6% [-16.7, -2.0] {-14.1, -4.0}  -108.7 [-189.8, -23.1]
-quadratic deficit_100mm  main Chandrapur           960.9    -9.6% [-16.7, -2.0] {-14.1, -4.0}   -90.2 [-157.4, -19.1]
-quadratic deficit_100mm  main   Kolhapur           801.4   -13.5% [-20.2, -4.4] {-17.5, -9.3}  -272.1 [-406.1, -87.9]
-quadratic deficit_100mm  main     Nagpur           960.9    -9.6% [-16.7, -2.0] {-14.1, -4.0}   -85.0 [-148.4, -18.0]
-quadratic deficit_100mm  main     Nanded           622.1  -17.7% [-27.0, -2.5] {-21.8, -12.9}  -180.2 [-274.1, -25.0]
-quadratic deficit_100mm  main  Osmanabad           622.1  -17.7% [-27.0, -2.5] {-21.8, -12.9}  -189.7 [-288.5, -26.3]
-quadratic deficit_100mm  main   Parbhani           622.1  -17.7% [-27.0, -2.5] {-21.8, -12.9}  -201.0 [-305.7, -27.8]
-quadratic deficit_100mm  main     Sangli           801.4   -13.5% [-20.2, -4.4] {-17.5, -9.3}  -241.0 [-359.7, -77.8]
-quadratic deficit_100mm  main     Wardha           960.9    -9.6% [-16.7, -2.0] {-14.1, -4.0}   -91.9 [-160.4, -19.5]
-quadratic deficit_100mm  main    Yeotmal           960.9    -9.6% [-16.7, -2.0] {-14.1, -4.0}   -94.1 [-164.2, -20.0]
+SCENARIO RESULTS - districts, headline models, 100 mm deficit (kg/ha baseline = district mean observed yield over the panel years):
+    model      scenario label       unit  Rbar_season_mm             pct [MBB L3] {districts}        MBB L2        MBB L4          kg/ha [MBB L3]
+   linear deficit_100mm  main      Akola           960.9    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]   -106.3 [-165.9, +8.4]
+   linear deficit_100mm  main  Amarawati           960.9    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]    -98.7 [-154.1, +7.8]
+   linear deficit_100mm  main       Beed           622.1    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]    -97.0 [-151.4, +7.7]
+   linear deficit_100mm  main   Buldhana           960.9    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]   -112.4 [-175.5, +8.9]
+   linear deficit_100mm  main Chandrapur           960.9    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]    -93.2 [-145.5, +7.4]
+   linear deficit_100mm  main   Kolhapur           801.4    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]  -199.1 [-310.8, +15.8]
+   linear deficit_100mm  main     Nagpur           960.9    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]    -87.9 [-137.2, +7.0]
+   linear deficit_100mm  main     Nanded           622.1    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]   -100.3 [-156.6, +7.9]
+   linear deficit_100mm  main  Osmanabad           622.1    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]   -105.6 [-164.9, +8.4]
+   linear deficit_100mm  main   Parbhani           622.1    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]   -111.9 [-174.7, +8.9]
+   linear deficit_100mm  main     Sangli           801.4    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]  -176.3 [-275.2, +14.0]
+   linear deficit_100mm  main     Wardha           960.9    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]    -95.1 [-148.4, +7.5]
+   linear deficit_100mm  main    Yeotmal           960.9    -9.9% [-15.4, +0.8] {-14.3, -5.2} [-17.0, +0.7] [-15.6, -1.2]    -97.3 [-151.8, +7.7]
+quadratic deficit_100mm  main      Akola           960.9    -9.6% [-15.4, +0.7] {-14.1, -4.3} [-17.0, +0.4] [-15.4, -0.9]   -102.8 [-166.1, +7.6]
+quadratic deficit_100mm  main  Amarawati           960.9    -9.6% [-15.4, +0.7] {-14.1, -4.3} [-17.0, +0.4] [-15.4, -0.9]    -95.5 [-154.4, +7.0]
+quadratic deficit_100mm  main       Beed           622.1  -17.7% [-25.9, -2.7] {-21.7, -12.7} [-26.2, -0.2] [-24.8, -8.7]  -174.2 [-253.9, -26.5]
+quadratic deficit_100mm  main   Buldhana           960.9    -9.6% [-15.4, +0.7] {-14.1, -4.3} [-17.0, +0.4] [-15.4, -0.9]   -108.7 [-175.8, +8.0]
+quadratic deficit_100mm  main Chandrapur           960.9    -9.6% [-15.4, +0.7] {-14.1, -4.3} [-17.0, +0.4] [-15.4, -0.9]    -90.2 [-145.8, +6.7]
+quadratic deficit_100mm  main   Kolhapur           801.4   -13.5% [-19.6, -2.5] {-17.5, -9.1} [-20.2, -1.2] [-19.2, -6.0]  -272.1 [-394.5, -50.8]
+quadratic deficit_100mm  main     Nagpur           960.9    -9.6% [-15.4, +0.7] {-14.1, -4.3} [-17.0, +0.4] [-15.4, -0.9]    -85.0 [-137.5, +6.3]
+quadratic deficit_100mm  main     Nanded           622.1  -17.7% [-25.9, -2.7] {-21.7, -12.7} [-26.2, -0.2] [-24.8, -8.7]  -180.2 [-262.6, -27.4]
+quadratic deficit_100mm  main  Osmanabad           622.1  -17.7% [-25.9, -2.7] {-21.7, -12.7} [-26.2, -0.2] [-24.8, -8.7]  -189.7 [-276.5, -28.8]
+quadratic deficit_100mm  main   Parbhani           622.1  -17.7% [-25.9, -2.7] {-21.7, -12.7} [-26.2, -0.2] [-24.8, -8.7]  -201.0 [-292.9, -30.5]
+quadratic deficit_100mm  main     Sangli           801.4   -13.5% [-19.6, -2.5] {-17.5, -9.1} [-20.2, -1.2] [-19.2, -6.0]  -241.0 [-349.4, -45.0]
+quadratic deficit_100mm  main     Wardha           960.9    -9.6% [-15.4, +0.7] {-14.1, -4.3} [-17.0, +0.4] [-15.4, -0.9]    -91.9 [-148.6, +6.8]
+quadratic deficit_100mm  main    Yeotmal           960.9    -9.6% [-15.4, +0.7] {-14.1, -4.3} [-17.0, +0.4] [-15.4, -0.9]    -94.1 [-152.1, +6.9]
 
 Weak-monsoon rows are ILLUSTRATIVE: they apply the fitted curve to a uniform percentage cut.
 
-Across the observed range (R from 499 to 1360 mm), 100 mm deficit, kg/ha at the panel mean yield 1153 kg/ha:
-          model  R_from_mm     pct  pct_lo_years  pct_hi_years  kgha_at_panel_mean_yield
-         linear   498.8000 -0.0988       -0.1631       -0.0245                 -113.9370
-         linear   709.7061 -0.0988       -0.1631       -0.0245                 -113.9370
-         linear   938.1878 -0.0988       -0.1631       -0.0245                 -113.9370
-         linear  1149.0939 -0.0988       -0.1631       -0.0245                 -113.9370
-         linear  1360.0000 -0.0988       -0.1631       -0.0245                 -113.9370
-      quadratic   498.8000 -0.2053       -0.3210        0.0124                 -236.8092
-      quadratic   709.7061 -0.1570       -0.2347       -0.0354                 -181.0422
-      quadratic   938.1878 -0.1013       -0.1670       -0.0267                 -116.7919
-      quadratic  1149.0939 -0.0466       -0.1889        0.0508                  -53.7214
-      quadratic  1360.0000  0.0114       -0.2306        0.1699                   13.1872
-   linear_level   498.8000 -0.0699       -0.1355        0.0021                  -80.5591
-   linear_level   709.7061 -0.0699       -0.1355        0.0021                  -80.5591
-   linear_level   938.1878 -0.0699       -0.1355        0.0021                  -80.5591
-   linear_level  1149.0939 -0.0699       -0.1355        0.0021                  -80.5591
-   linear_level  1360.0000 -0.0699       -0.1355        0.0021                  -80.5591
-quadratic_level   498.8000 -0.1738       -0.3127        0.0303                 -200.4384
-quadratic_level   709.7061 -0.1250       -0.2105       -0.0073                 -144.1543
-quadratic_level   938.1878 -0.0721       -0.1421       -0.0018                  -83.1799
-quadratic_level  1149.0939 -0.0233       -0.1665        0.0552                  -26.8959
-quadratic_level  1360.0000  0.0255       -0.2094        0.1456                   29.3882
+Across the observed range (R from 499 to 1360 mm), 100 mm deficit; kg/ha at the panel mean observed yield 1153 kg/ha:
+          model  R_from_mm     pct  pct_lo_L3  pct_hi_L3  kgha_at_panel_mean_yield
+         linear   498.8000 -0.0988    -0.1542     0.0078                 -113.9370
+         linear   709.7061 -0.0988    -0.1542     0.0078                 -113.9370
+         linear   938.1878 -0.0988    -0.1542     0.0078                 -113.9370
+         linear  1149.0939 -0.0988    -0.1542     0.0078                 -113.9370
+         linear  1360.0000 -0.0988    -0.1542     0.0078                 -113.9370
+      quadratic   498.8000 -0.2053    -0.3007    -0.0218                 -236.8092
+      quadratic   709.7061 -0.1570    -0.2276    -0.0321                 -181.0422
+      quadratic   938.1878 -0.1013    -0.1577     0.0023                 -116.7919
+      quadratic  1149.0939 -0.0466    -0.1517     0.0638                  -53.7214
+      quadratic  1360.0000  0.0114    -0.1670     0.1498                   13.1872
+   linear_level   498.8000 -0.0699    -0.1320     0.0199                  -80.5591
+   linear_level   709.7061 -0.0699    -0.1320     0.0199                  -80.5591
+   linear_level   938.1878 -0.0699    -0.1320     0.0199                  -80.5591
+   linear_level  1149.0939 -0.0699    -0.1320     0.0199                  -80.5591
+   linear_level  1360.0000 -0.0699    -0.1320     0.0199                  -80.5591
+quadratic_level   498.8000 -0.1738    -0.3055    -0.0260                 -200.4384
+quadratic_level   709.7061 -0.1250    -0.2124    -0.0208                 -144.1543
+quadratic_level   938.1878 -0.0721    -0.1355     0.0131                  -83.1799
+quadratic_level  1149.0939 -0.0233    -0.1083     0.0661                  -26.8959
+quadratic_level  1360.0000  0.0255    -0.1064     0.1391                   29.3882
 table -> outputs/prototype/tables/08_scenario_results.csv
 table -> outputs/prototype/tables/08_scenario_range_curve.csv
 table -> outputs/prototype/tables/08_scenario_district_means.csv

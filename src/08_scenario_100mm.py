@@ -5,7 +5,9 @@ Usage: python src/08_scenario_100mm.py <panel.csv> <outdir>
 Effect of a rainfall change from R_old to R_new: delta = f(R_new) - f(R_old), f = fitted rainfall part.
   ln-yield models : pct = exp(delta) - 1;  kg/ha = pct * Ybar_d
   kg/ha models    : kg/ha = delta;         pct = delta / Ybar_d
-Rbar_d = district mean rainfall over the panel years; Ybar_d = district mean observed yield.
+Rbar_d = district mean rainfall over the panel years. Ybar_d = KG/HA BASELINE = district mean observed
+yield over the panel years (SPEC A9). Percent is the headline unit. No smearing is needed for the
+percent effect (a constant smearing factor cancels in the ratio), and Ybar_d is observed, not predicted.
 
 Scenarios
 - deficit_100mm           R_season: Rbar_d -> Rbar_d - 100 (headline linear/quadratic; kg/ha models)
@@ -15,9 +17,10 @@ Scenarios
 - across the observed range: 100 mm deficit from R to R-100 for R in [min+100, max] of R_season,
   so both points lie inside the observed range.
 
-Intervals: 95% percentile bootstrap, resampling years (main) and resampling districts (check);
-N_BOOT reps each, seeds from config.SEED. Rbar_d and Ybar_d are held at sample values; only the
-coefficients vary across replications. Subdivision/state rows = unweighted mean of district rows.
+Intervals (SPEC A7): 95% percentile intervals from the moving-block bootstrap over years, L = BLOCK_LENGTH
+(headline) and BLOCK_LENGTH_SENSITIVITY; plus the district bootstrap as a check. N_BOOT_BLOCK reps each;
+seeds config.BOOT_SEEDS (the same year draws as src/06). The full model is refitted in every replication.
+Rbar_d and Ybar_d are held at sample values. Subdivision/state rows = unweighted mean of district rows.
 """
 import numpy as np
 import pandas as pd
@@ -28,6 +31,8 @@ import config as C  # noqa: E402  (pipeline_utils puts the repo root on sys.path
 SHORT = {"MADHYA MAHARASHTRA": "Madhya M."}  # figure labels only
 RSEASON_MODELS = ["linear", "quadratic", "linear_level", "quadratic_level"]
 TIMING_MODELS = ["timing_linear", "timing_quad"]
+BASELINE_NOTE = "kg/ha baseline = district mean observed yield over the panel years"
+HEAD = f"L{C.BLOCK_LENGTH}"
 
 
 def scenarios(dm: pd.DataFrame) -> list:
@@ -49,10 +54,7 @@ def scenarios(dm: pd.DataFrame) -> list:
 
 
 def all_effects(params: dict, scen: list, ybar: np.ndarray) -> dict:
-    res = {}
-    for m, s, _, ch in scen:
-        res[(m, s)] = U.effect(params[m], U.MODELS[m]["outcome"], ch, ybar)
-    return res
+    return {(m, s): U.effect(params[m], U.MODELS[m]["outcome"], ch, ybar) for m, s, _, ch in scen}
 
 
 def range_curve(params: dict, grid: np.ndarray, ybar_all: float) -> dict:
@@ -66,42 +68,46 @@ def main() -> None:
     plt = U.setup_matplotlib()
     p = U.load_panel(a.panel)
     out.log(f"Panel: {U.describe_panel(p)}")
+    out.log(f"Percent is the headline unit; {BASELINE_NOTE}.")
     models = RSEASON_MODELS + TIMING_MODELS
 
     dm = p.groupby("district").agg(subdivision=("subdivision", "first"), R_season=("R_season", "mean"),
                                    R_early=("R_early", "mean"), R_late=("R_late", "mean"),
                                    Ybar_kgha=("yield_kgha", "mean")).reset_index()
     assert np.allclose(dm.R_early + dm.R_late, dm.R_season), "Jun-Jul + Aug-Sep must equal Jun-Sep"
+    assert list(dm.district) == list(pd.unique(p.district)), "district order must match the panel order"
     ybar = dm.Ybar_kgha.to_numpy()
     scen = scenarios(dm)
     dm["share_early"] = dm.R_early / dm.R_season
-    out.log("District means used (Rbar in mm, Ybar in kg/ha), and the early-window share of the 100 mm split:")
+    out.log("District means used (Rbar in mm, Ybar = kg/ha baseline), and the early-window share of the split:")
     out.log(dm.to_string(index=False, float_format=lambda x: f"{x:.3f}"))
 
-    # Point estimates (PanelOLS) and agreement with the fast within estimator used in the bootstrap.
-    point = {}
+    point, fes = {}, {}
     for m in models:
         spec = U.MODELS[m]
         res = U.fit_fe(p, spec["outcome"], spec["rain"])
-        fast = U.fe_params_fast(p, spec["outcome"], spec["rain"])
-        assert np.allclose(res.params[fast.index], fast, rtol=1e-7, atol=1e-12), f"fast estimator mismatch {m}"
+        fes[m] = U.FastFE(p, spec["outcome"], spec["rain"])
+        fast = fes[m].fit(np.arange(len(p)))
+        assert np.allclose(res.params[fes[m].cols].to_numpy(), fast, rtol=1e-7, atol=1e-12), f"FastFE mismatch {m}"
         point[m] = res.params
     pe = all_effects(point, scen, ybar)
-    rmin, rmax = p.R_season.min(), p.R_season.max()
-    grid = np.linspace(rmin + C.RAIN_SHOCK_MM, rmax, C.RANGE_GRID_POINTS)
+    grid = np.linspace(p.R_season.min() + C.RAIN_SHOCK_MM, p.R_season.max(), C.RANGE_GRID_POINTS)
     ybar_all = p.yield_kgha.mean()
     pc = range_curve(point, grid, ybar_all)
 
-    # Bootstraps
-    ss = np.random.SeedSequence(C.SEED).spawn(2)
+    # Bootstraps: moving blocks over years (same draws as src/06) and districts (check).
+    years, yrows = U.year_rows(p)
+    schemes = {f"L{L}": [(U.rows_from_year_draw(yrows, d), None)
+                         for d in U.block_draws(len(years), L, C.N_BOOT_BLOCK, C.BOOT_SEEDS[f"block_L{L}"])]
+               for L in [C.BLOCK_LENGTH] + list(C.BLOCK_LENGTH_SENSITIVITY)}
+    schemes["districts"] = [U.rows_from_district_draw(p, d)
+                            for d in U.district_draws(p.district.nunique(), C.N_BOOT_BLOCK, C.BOOT_SEEDS["districts"])]
     boot = {}
-    for kind, rng, resample in [("years", np.random.default_rng(ss[0]), U.resample_years),
-                                ("districts", np.random.default_rng(ss[1]), U.resample_districts)]:
+    for kind, draws in schemes.items():
         eff = {k: ([], []) for k in pe}
         curve = {m: ([], []) for m in RSEASON_MODELS}
-        for b in range(C.N_BOOT):
-            bd = resample(p, rng)
-            prm = {m: U.fe_params_fast(bd, U.MODELS[m]["outcome"], U.MODELS[m]["rain"]) for m in models}
+        for rows, codes in draws:
+            prm = {m: pd.Series(fes[m].fit(rows, codes), index=fes[m].cols) for m in models}
             for k, (pct, kg) in all_effects(prm, scen, ybar).items():
                 eff[k][0].append(pct)
                 eff[k][1].append(kg)
@@ -110,74 +116,72 @@ def main() -> None:
                 curve[m][1].append(kg)
         boot[kind] = ({k: (np.array(v[0]), np.array(v[1])) for k, v in eff.items()},
                       {m: (np.array(v[0]), np.array(v[1])) for m, v in curve.items()})
-        out.log(f"Bootstrap over {kind}: {C.N_BOOT} reps done")
+        seed = C.BOOT_SEEDS["districts" if kind == "districts" else f"block_{kind}"]
+        out.log(f"Bootstrap {kind}: {len(draws)} reps, seed {seed}")
 
     def ci(arr):
         return np.nanpercentile(arr, 2.5, axis=0), np.nanpercentile(arr, 97.5, axis=0)
 
-    # District rows
+    kinds = list(schemes)
+    groups = [(s_, (dm.subdivision == s_).to_numpy()) for s_ in sorted(dm.subdivision.unique())]
+    groups.append(("ALL DISTRICTS", np.ones(len(dm), bool)))
     rows = []
     for (m, s, lab, _) in scen:
         pct, kg = pe[(m, s)]
-        r = {"model": m, "role": U.MODELS[m]["role"], "scenario": s, "label": lab}
-        by = {kind: boot[kind][0][(m, s)] for kind in boot}
-        lo_y, hi_y = ci(by["years"][0]); klo_y, khi_y = ci(by["years"][1])
-        lo_d, hi_d = ci(by["districts"][0]); klo_d, khi_d = ci(by["districts"][1])
-        for i, d in dm.iterrows():
-            rows.append({**r, "level": "district", "unit": d.district, "subdivision": d.subdivision,
-                         "Rbar_season_mm": d.R_season, "Ybar_kgha": d.Ybar_kgha,
-                         "pct": pct[i], "pct_lo_years": lo_y[i], "pct_hi_years": hi_y[i],
-                         "pct_lo_districts": lo_d[i], "pct_hi_districts": hi_d[i],
-                         "kgha": kg[i], "kgha_lo_years": klo_y[i], "kgha_hi_years": khi_y[i],
-                         "kgha_lo_districts": klo_d[i], "kgha_hi_districts": khi_d[i]})
-        # Aggregates: unweighted mean of districts, computed inside each replication.
-        groups = [(s_, (dm.subdivision == s_).to_numpy()) for s_ in sorted(dm.subdivision.unique())]
-        groups.append(("ALL DISTRICTS", np.ones(len(dm), bool)))
-        for g, k in groups:
-            agg = lambda x: x[..., k].mean(axis=-1)  # noqa: E731
-            a_lo_y, a_hi_y = ci(agg(by["years"][0])); ak_lo_y, ak_hi_y = ci(agg(by["years"][1]))
-            a_lo_d, a_hi_d = ci(agg(by["districts"][0])); ak_lo_d, ak_hi_d = ci(agg(by["districts"][1]))
-            rows.append({**r, "level": "subdivision" if g != "ALL DISTRICTS" else "state", "unit": g,
-                         "subdivision": g, "Rbar_season_mm": dm.R_season[k].mean(), "Ybar_kgha": dm.Ybar_kgha[k].mean(),
-                         "pct": pct[k].mean(), "pct_lo_years": a_lo_y, "pct_hi_years": a_hi_y,
-                         "pct_lo_districts": a_lo_d, "pct_hi_districts": a_hi_d,
-                         "kgha": kg[k].mean(), "kgha_lo_years": ak_lo_y, "kgha_hi_years": ak_hi_y,
-                         "kgha_lo_districts": ak_lo_d, "kgha_hi_districts": ak_hi_d})
+        base = {"model": m, "role": U.MODELS[m]["role"], "scenario": s, "label": lab, "kgha_baseline": BASELINE_NOTE}
+        by = {kind: boot[kind][0][(m, s)] for kind in kinds}
+        units = [("district", d.district, d.subdivision, np.arange(len(dm)) == i) for i, d in dm.iterrows()]
+        units += [("subdivision" if g != "ALL DISTRICTS" else "state", g, g, k) for g, k in groups]
+        for level, unit, sub, k in units:
+            r = {**base, "level": level, "unit": unit, "subdivision": sub, "Rbar_season_mm": dm.R_season[k].mean(),
+                 "Ybar_kgha": dm.Ybar_kgha[k].mean(), "pct": pct[k].mean(), "kgha": kg[k].mean()}
+            for kind in kinds:
+                lo, hi = ci(by[kind][0][:, k].mean(axis=1))
+                klo, khi = ci(by[kind][1][:, k].mean(axis=1))
+                r.update({f"pct_lo_{kind}": lo, f"pct_hi_{kind}": hi, f"kgha_lo_{kind}": klo, f"kgha_hi_{kind}": khi})
+            rows.append(r)
     tab = pd.DataFrame(rows)
 
     def fmt(df):
         d = df.copy()
-        d["pct [years CI] {districts CI}"] = [
-            f"{100 * r.pct:+6.1f}% [{100 * r.pct_lo_years:+.1f}, {100 * r.pct_hi_years:+.1f}] "
-            f"{{{100 * r.pct_lo_districts:+.1f}, {100 * r.pct_hi_districts:+.1f}}}" for r in d.itertuples()]
-        d["kg/ha [years CI]"] = [f"{r.kgha:+7.1f} [{r.kgha_lo_years:+.1f}, {r.kgha_hi_years:+.1f}]" for r in d.itertuples()]
-        return d[["model", "scenario", "label", "unit", "Rbar_season_mm", "pct [years CI] {districts CI}", "kg/ha [years CI]"]]
+        d[f"pct [MBB {HEAD}] {{districts}}"] = [
+            f"{100 * r['pct']:+6.1f}% [{100 * r[f'pct_lo_{HEAD}']:+.1f}, {100 * r[f'pct_hi_{HEAD}']:+.1f}] "
+            f"{{{100 * r['pct_lo_districts']:+.1f}, {100 * r['pct_hi_districts']:+.1f}}}" for _, r in d.iterrows()]
+        for L in C.BLOCK_LENGTH_SENSITIVITY:
+            d[f"MBB L{L}"] = [f"[{100 * r[f'pct_lo_L{L}']:+.1f}, {100 * r[f'pct_hi_L{L}']:+.1f}]" for _, r in d.iterrows()]
+        d[f"kg/ha [MBB {HEAD}]"] = [f"{r['kgha']:+7.1f} [{r[f'kgha_lo_{HEAD}']:+.1f}, {r[f'kgha_hi_{HEAD}']:+.1f}]"
+                                     for _, r in d.iterrows()]
+        return d[["model", "scenario", "label", "unit", "Rbar_season_mm", f"pct [MBB {HEAD}] {{districts}}"]
+                 + [f"MBB L{L}" for L in C.BLOCK_LENGTH_SENSITIVITY] + [f"kg/ha [MBB {HEAD}]"]]
 
-    out.log("\nSCENARIO RESULTS - subdivision and state rows (unweighted means of districts).")
-    out.log("Brackets: 95% bootstrap over years [..] and over districts {..}.")
-    agg_tab = tab[tab.level != "district"]
-    out.log(fmt(agg_tab).to_string(index=False, float_format=lambda x: f"{x:.1f}"))
-    out.log("\nSCENARIO RESULTS - districts, headline models, 100 mm deficit:")
+    out.log(f"\nSCENARIO RESULTS - subdivision and state rows (unweighted means of districts); {BASELINE_NOTE}.")
+    out.log(f"Brackets: 95% moving-block bootstrap over years, L = {C.BLOCK_LENGTH} [..] (headline); district "
+            f"bootstrap {{..}} (check); L = {C.BLOCK_LENGTH_SENSITIVITY} as sensitivity.")
+    out.log(fmt(tab[tab.level != "district"]).to_string(index=False, float_format=lambda x: f"{x:.1f}"))
+    out.log(f"\nSCENARIO RESULTS - districts, headline models, 100 mm deficit ({BASELINE_NOTE}):")
     out.log(fmt(tab[(tab.level == "district") & tab.model.isin(["linear", "quadratic"]) &
                     (tab.scenario == "deficit_100mm")]).to_string(index=False, float_format=lambda x: f"{x:.1f}"))
     out.log("\nWeak-monsoon rows are ILLUSTRATIVE: they apply the fitted curve to a uniform percentage cut.")
 
-    # Range curve table
     crow = []
     for m in RSEASON_MODELS:
         pct, kg = pc[m]
-        by, bd_ = boot["years"][1][m], boot["districts"][1][m]
-        lo, hi = ci(by[0]); klo, khi = ci(by[1]); dlo, dhi = ci(bd_[0])
         for j, R in enumerate(grid):
-            crow.append({"model": m, "R_from_mm": R, "R_to_mm": R - C.RAIN_SHOCK_MM, "pct": pct[j],
-                         "pct_lo_years": lo[j], "pct_hi_years": hi[j], "pct_lo_districts": dlo[j],
-                         "pct_hi_districts": dhi[j], "kgha_at_panel_mean_yield": kg[j], "kgha_lo_years": klo[j],
-                         "kgha_hi_years": khi[j], "panel_mean_yield_kgha": ybar_all})
+            r = {"model": m, "R_from_mm": R, "R_to_mm": R - C.RAIN_SHOCK_MM, "pct": pct[j],
+                 "kgha_at_panel_mean_yield": kg[j], "panel_mean_yield_kgha": ybar_all,
+                 "kgha_baseline": "panel mean observed yield (range curve only)"}
+            for kind in kinds:
+                cp, ck = boot[kind][1][m]
+                lo, hi = ci(cp[:, j])
+                klo, khi = ci(ck[:, j])
+                r.update({f"pct_lo_{kind}": lo, f"pct_hi_{kind}": hi, f"kgha_lo_{kind}": klo, f"kgha_hi_{kind}": khi})
+            crow.append(r)
     curve_tab = pd.DataFrame(crow)
-    out.log(f"\nAcross the observed range (R from {grid[0]:.0f} to {grid[-1]:.0f} mm), 100 mm deficit, "
-            f"kg/ha at the panel mean yield {ybar_all:.0f} kg/ha:")
-    show = curve_tab[curve_tab.R_from_mm.isin(grid[[0, len(grid) // 4, len(grid) // 2, 3 * len(grid) // 4, -1]])]
-    out.log(show[["model", "R_from_mm", "pct", "pct_lo_years", "pct_hi_years", "kgha_at_panel_mean_yield"]]
+    out.log(f"\nAcross the observed range (R from {grid[0]:.0f} to {grid[-1]:.0f} mm), 100 mm deficit; kg/ha at the "
+            f"panel mean observed yield {ybar_all:.0f} kg/ha:")
+    sel = grid[[0, len(grid) // 4, len(grid) // 2, 3 * len(grid) // 4, -1]]
+    out.log(curve_tab[curve_tab.R_from_mm.isin(sel)][["model", "R_from_mm", "pct", f"pct_lo_{HEAD}", f"pct_hi_{HEAD}",
+                                                      "kgha_at_panel_mean_yield"]]
             .to_string(index=False, float_format=lambda x: f"{x:.4f}"))
 
     for df, nm in [(tab, "results"), (curve_tab, "range_curve"), (dm, "district_means")]:
@@ -187,8 +191,8 @@ def main() -> None:
     fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
     for ax, m, title in [(axes[0], "linear", "Linear in R_season"), (axes[1], "quadratic", "Quadratic in R_season")]:
         c = curve_tab[curve_tab.model == m]
-        ax.fill_between(c.R_from_mm, 100 * c.pct_lo_years, 100 * c.pct_hi_years, color="#86b6ef", alpha=0.45,
-                        lw=0, label="95% bootstrap (years)")
+        ax.fill_between(c.R_from_mm, 100 * c[f"pct_lo_{HEAD}"], 100 * c[f"pct_hi_{HEAD}"], color="#86b6ef", alpha=0.45,
+                        lw=0, label=f"95% moving-block bootstrap (years, L={C.BLOCK_LENGTH})")
         ax.plot(c.R_from_mm, 100 * c.pct_lo_districts, color=U.MUTED, lw=1, ls=":", label="95% bootstrap (districts)")
         ax.plot(c.R_from_mm, 100 * c.pct_hi_districts, color=U.MUTED, lw=1, ls=":")
         ax.plot(c.R_from_mm, 100 * c.pct, color="#1c5cab", lw=2, label="Point estimate")
@@ -196,8 +200,8 @@ def main() -> None:
         for s_ in sorted(dm.subdivision.unique()):
             r_ = dm.R_season[dm.subdivision == s_].mean()
             ax.axvline(r_, color=U.SUB_COLOR.get(s_, U.MUTED), lw=1, ls="--")
-            ax.text(r_, 0.98, f"{SHORT.get(s_, U.SUB_LABEL.get(s_, s_))} mean ", rotation=90, va="top", ha="right", fontsize=7,
-                    color=U.INK2, transform=ax.get_xaxis_transform())
+            ax.text(r_, 0.98, f"{SHORT.get(s_, U.SUB_LABEL.get(s_, s_))} mean ", rotation=90, va="top", ha="right",
+                    fontsize=7, color=U.INK2, transform=ax.get_xaxis_transform())
         ax.set(title=title, xlabel="Starting Jun-Sep rainfall R (mm); deficit takes it to R - 100")
     axes[0].set_ylabel("Yield change for a 100 mm deficit (%)")
     axes[1].legend(frameon=False, loc="upper left", bbox_to_anchor=(1.01, 1))
@@ -212,15 +216,16 @@ def main() -> None:
             q = d[d.model == m].set_index("unit").loc[order]
             y = np.arange(len(order)) + off
             sc = 100 if col == "pct" else 1
-            ax.errorbar(sc * q[col], y, xerr=[sc * (q[col] - q[f"{col}_lo_years"]), sc * (q[f"{col}_hi_years"] - q[col])],
+            ax.errorbar(sc * q[col], y, xerr=[sc * (q[col] - q[f"{col}_lo_{HEAD}"]), sc * (q[f"{col}_hi_{HEAD}"] - q[col])],
                         fmt=mk, color=colr, ms=5, lw=1, capsize=0, label=m)
         ax.axvline(0, color=U.INK2, lw=1)
         ax.set_yticks(np.arange(len(order)), [f"{o} ({U.SUB_LABEL.get(dm.set_index('district').subdivision[o], '')})" for o in order])
         ax.set(xlabel=f"Change for a 100 mm deficit ({unit})")
-    axes[0].set_title("Percent (ln-yield models)")
-    axes[1].set_title("kg/ha (= percent x district mean yield)")
+    axes[0].set_title("Percent (headline)")
+    axes[1].set_title("kg/ha (baseline: district mean observed yield)")
     axes[1].legend(frameon=False, loc="upper left", bbox_to_anchor=(1.01, 1))
-    fig.suptitle("100 mm deficit at each district's mean rainfall, 95% year-bootstrap interval", fontweight="bold", y=1.02)
+    fig.suptitle(f"100 mm deficit at each district's mean rainfall, 95% moving-block bootstrap (L={C.BLOCK_LENGTH})",
+                 fontweight="bold", y=1.02)
     out.log(f"figure -> {U.rel(out.figure(fig, 'district_effects'))}")
     out.log("Results are associations under the model's assumptions, not causal effects.")
     out.close()

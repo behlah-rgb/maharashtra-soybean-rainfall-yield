@@ -1,4 +1,11 @@
-"""Step 3: exploratory data analysis of the fallback panel (PROTOTYPE).
+"""Step 3: exploratory data analysis of a panel (prototype panel_v1.csv or final panel_final.csv).
+
+Usage: python src/03_eda.py <panel.csv> <outdir>
+  prototype: python src/03_eda.py data/processed/panel_v1.csv outputs/prototype
+  final    : python src/03_eda.py data/processed/panel_final.csv outputs/final
+Refuses to write under outputs/final unless the input is panel_final.csv (same guard as src/06-09).
+Writes <outdir>/tables/eda_*.csv and <outdir>/figures/eda_*.png. Headers: PROTOTYPE unless final.
+(Until 2026-10-19 this script read panel_v1.csv and wrote to outputs/tables and outputs/figures.)
 
 Reads  : config.PANEL_V1_FILE
 Writes : outputs/tables/eda_*.csv, outputs/figures/eda_*.png
@@ -18,6 +25,7 @@ from matplotlib.ticker import MaxNLocator  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config as C  # noqa: E402
+import pipeline_utils as U  # noqa: E402  (same guard and header as src/06-09)
 
 # Palette (reference instance of the dataviz method): first three categorical slots,
 # validated all-pairs; markers add a second encoding so identity is not colour-only.
@@ -40,28 +48,33 @@ plt.rcParams.update({
 VARS = ["ln_yield", "yield_kgha", "R_season", "R_early", "R_late", "trend", "area_kha"]
 
 
+OUT = {}  # set in main(): tables, figures, header
+
+
 def save_table(df: pd.DataFrame, name: str, index: bool = False) -> None:
-    path = C.OUT_TABLES / name
+    path = OUT["tables"] / name
     with open(path, "w") as f:
-        f.write(f"# {C.PROTOTYPE_HEADER}\n")
+        f.write(f"# {OUT['header']}\n")
         df.to_csv(f, index=index)
-    print(f"  table  -> {path.relative_to(C.ROOT)}")
+    print(f"  table  -> {U.rel(path)}")
 
 
 def save_fig(fig, name: str) -> None:
-    fig.text(0.01, -0.03, C.PROTOTYPE_HEADER, fontsize=7, color=MUTED, ha="left", va="top")
-    path = C.OUT_FIGURES / name
+    fig.text(0.01, -0.03, OUT["header"], fontsize=7, color=MUTED, ha="left", va="top")
+    path = OUT["figures"] / name
     fig.savefig(path, bbox_inches="tight", dpi=150)
     plt.close(fig)
-    print(f"  figure -> {path.relative_to(C.ROOT)}")
+    print(f"  figure -> {U.rel(path)}")
 
 
 def main() -> None:
-    C.OUT_TABLES.mkdir(parents=True, exist_ok=True)
-    C.OUT_FIGURES.mkdir(parents=True, exist_ok=True)
-    p = pd.read_csv(C.PANEL_V1_FILE)
+    a = U.parse_args(__doc__.splitlines()[0])
+    OUT.update(tables=a.outdir / "tables", figures=a.outdir / "figures", header=U.header(a.panel))
+    OUT["tables"].mkdir(parents=True, exist_ok=True)
+    OUT["figures"].mkdir(parents=True, exist_ok=True)
+    p = pd.read_csv(a.panel)
     assert set(p.subdivision) <= set(SUB_ORDER), "unexpected subdivision in panel"
-    print(C.PROTOTYPE_HEADER)
+    print(OUT["header"])
     print(f"Panel: {len(p)} rows, {p.district.nunique()} districts, {p.year.min()}-{p.year.max()}")
 
     # 1. Summary statistics.

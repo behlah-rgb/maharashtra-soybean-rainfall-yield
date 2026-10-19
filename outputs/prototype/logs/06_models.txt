@@ -3,86 +3,146 @@ PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no tempera
 ============================================================================================
 Input panel: data/processed/panel_v1.csv   Output folder: outputs/prototype
 Panel: 208 obs, 13 districts, 16 years (2000-2015), balanced=True, rainfall district-level=False, distinct R_season series=3
-Estimator: PanelOLS, entity (district) effects + common linear trend (t = year - 2000), SEs clustered by year.
-Year clusters: 16. Cluster-robust inference with few clusters is approximate.
-
+Estimator: PanelOLS, entity (district) effects + common linear trend (t = year - 2000).
+Headline intervals: moving-block bootstrap over years, L = 3 (sensitivity [2, 4]), 2000 reps, seeds L3=2803, L2=2802, L4=2804; whole years with all districts; district effects, trend and rainfall terms refitted each rep.
+Driscoll-Kraay: Bartlett kernel, lags 0..2. FLAG: unreliable with T = 16 years.
 AIC/BIC: llf = -n/2 [ln(2 pi) + ln(SSR/n) + 1]; AIC = -2 llf + 2k; BIC = -2 llf + k ln(n);
-k = slope parameters + number of district effects. Compare AIC/BIC only between models with the
-same outcome (ln vs kg/ha likelihoods are on different scales).
+k = slope parameters + number of district effects. Compare AIC/BIC only within the same outcome.
 
---------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 MODEL linear  [headline]  outcome=ln_yield  regressors=['trend', 'R_season']
---------------------------------------------------------------------------------------------
-               coef  se_cluster_year        t          p
-trend    -0.0336363        0.0147468 -2.28092  0.0236454
-R_season 0.00104026      0.000346639    3.001 0.00304638
+----------------------------------------------------------------------------------------------------
 within R2 = 0.2364  N = 208  districts = 13  SSR = 39.513  k = 15  llf = -122.405  AIC = 274.809  BIC = 324.872
-LOYO: RMSE ln = 0.4901  RMSE kg/ha = 561.5  MAE kg/ha = 398.5  (ln models: kg/ha via exp(pred) x Duan smearing factor)
+coef:  trend = -0.0336363  R_season = 0.00104026
+SE by method:
+method      MBB_L2    MBB_L3    MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district   year_CR
+term                                                                                                   
+trend      0.02596   0.03028   0.03895     0.007741         0.01783    0.01545            NaN   0.01475
+R_season 0.0004759 0.0004365 0.0003903    0.0002591       0.0003692  0.0003862            NaN 0.0003466
+p-value by method (H0: coef = 0):
+method    MBB_L2  MBB_L3  MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district  year_CR
+term                                                                                            
+trend     0.3080  0.4500  0.4960       0.0000          0.0607     0.0307            NaN   0.0236
+R_season  0.0610  0.0670  0.0290       0.0001          0.0053     0.0077         0.0039   0.0030
+LOYO: RMSE ln = 0.4901; RMSE kg/ha naive = 541.3, smeared = 561.5 (mean Duan factor 1.0927)
 
---------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 MODEL quadratic  [headline]  outcome=ln_yield  regressors=['trend', 'R_season', 'R_season_sq']
---------------------------------------------------------------------------------------------
-                    coef  se_cluster_year        t         p
-trend         -0.0277463        0.0145913 -1.90156 0.0587262
-R_season      0.00355553        0.0016429  2.16418 0.0316849
-R_season_sq -1.40047e-06      9.10855e-07 -1.53754  0.125809
+----------------------------------------------------------------------------------------------------
 within R2 = 0.2618  N = 208  districts = 13  SSR = 38.1972  k = 16  llf = -118.883  AIC = 269.765  BIC = 323.166
-Squared term test (R_season_sq = 0):
-  clustered Wald chi2(1) = 2.3640, p = 0.1242;  F = W/q = 2.3640, p[F(1,15)] = 0.1450
-  classical F (SSR linear vs quadratic) = 6.6137, p[F(1,192)] = 0.0109  (assumes iid errors)
+coef:  trend = -0.0277463  R_season = 0.00355553  R_season_sq = -1.40047e-06
+SE by method:
+method         MBB_L2   MBB_L3    MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district   year_CR
+term                                                                                                     
+trend         0.02575  0.03016   0.03925     0.007786         0.01763    0.01539            NaN   0.01459
+R_season     0.001671 0.001513  0.001162    0.0005248         0.00111   0.001304            NaN  0.001643
+R_season_sq 9.034e-07 8.05e-07 6.464e-07    3.409e-07       5.933e-07  7.568e-07            NaN 9.109e-07
+p-value by method (H0: coef = 0):
+method       MBB_L2  MBB_L3  MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district  year_CR
+term                                                                                               
+trend        0.3790  0.5540  0.6450       0.0005          0.1173     0.0729            NaN   0.0587
+R_season     0.0970  0.0700  0.0040       0.0000          0.0016     0.0070         0.0015   0.0317
+R_season_sq  0.1860  0.1480  0.0630       0.0001          0.0193     0.0658         0.0061   0.1258
+Squared term (R_season_sq = 0): year-CR Wald chi2(1) = 2.3640, F = 2.3640, p[F(1,15)] = 0.1450; classical F = 6.6137, p[F(1,192)] = 0.0109 (iid errors; not in verdict)
+LINEAR vs QUADRATIC at alpha = 0.05: INCONCLUSIVE (methods disagree)
+  p by method: district_CR 0.0001*, wild_district 0.0061*, year_CR 0.1258, twoway_CR 0.0658, driscoll_kraay 0.0193*, MBB_L3 0.1480   (* = significant)
+  sensitivity (not in verdict): MBB_L2 0.1860, MBB_L4 0.0630
   turning point -b1/(2 b2) = 1269.4 mm (max); observed 398.8-1360.0 mm
-LOYO: RMSE ln = 0.4918  RMSE kg/ha = 543.5  MAE kg/ha = 391.3  (ln models: kg/ha via exp(pred) x Duan smearing factor)
+LOYO: RMSE ln = 0.4918; RMSE kg/ha naive = 525.5, smeared = 543.5 (mean Duan factor 1.0906)
 
---------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 MODEL linear_level  [robustness outcome (kg/ha)]  outcome=yield_kgha  regressors=['trend', 'R_season']
---------------------------------------------------------------------------------------------
-             coef  se_cluster_year        t         p
-trend    -18.6573          12.9407 -1.44175  0.150993
-R_season 0.805591         0.357258  2.25493 0.0252608
+----------------------------------------------------------------------------------------------------
 within R2 = 0.1465  N = 208  districts = 13  SSR = 3.37826e+07  k = 15  llf = -1542.923  AIC = 3115.846  BIC = 3165.909
-LOYO: RMSE ln = nan  RMSE kg/ha = 454.1  MAE kg/ha = 361.2
+coef:  trend = -18.6573  R_season = 0.805591
+SE by method:
+method    MBB_L2  MBB_L3  MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district  year_CR
+term                                                                                            
+trend      22.99   27.11   34.69        8.153           15.57      14.25            NaN    12.94
+R_season  0.4743  0.4309  0.3867       0.2466          0.3812     0.3905            NaN   0.3573
+p-value by method (H0: coef = 0):
+method    MBB_L2  MBB_L3  MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district  year_CR
+term                                                                                            
+trend     0.5150  0.7150  0.8020       0.0232          0.2322     0.1919            NaN   0.1510
+R_season  0.1110  0.1180  0.0560       0.0013          0.0358     0.0405         0.0117   0.0253
+LOYO: RMSE ln = nan; RMSE kg/ha naive = 454.1, smeared = nan (mean Duan factor nan)
 
---------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 MODEL quadratic_level  [robustness outcome (kg/ha)]  outcome=yield_kgha  regressors=['trend', 'R_season', 'R_season_sq']
---------------------------------------------------------------------------------------------
-                   coef  se_cluster_year         t         p
-trend          -13.0455          13.0617 -0.998757   0.31917
-R_season        3.20209          1.60788   1.99149 0.0478441
-R_season_sq -0.00133434      0.000880736  -1.51503   0.13141
+----------------------------------------------------------------------------------------------------
 within R2 = 0.1767  N = 208  districts = 13  SSR = 3.25882e+07  k = 16  llf = -1539.179  AIC = 3110.358  BIC = 3163.759
-Squared term test (R_season_sq = 0):
-  clustered Wald chi2(1) = 2.2953, p = 0.1298;  F = W/q = 2.2953, p[F(1,15)] = 0.1506
-  classical F (SSR linear_level vs quadratic_level) = 7.0372, p[F(1,192)] = 0.0087  (assumes iid errors)
+coef:  trend = -13.0455  R_season = 3.20209  R_season_sq = -0.00133434
+SE by method:
+method         MBB_L2    MBB_L3    MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district   year_CR
+term                                                                                                      
+trend           23.07     27.47     35.38        8.987           15.66      14.73            NaN     13.06
+R_season        1.647     1.407     1.108       0.5252           1.011       1.37            NaN     1.608
+R_season_sq 0.0008892 0.0007171 0.0005833    0.0003703       0.0005222  0.0007887            NaN 0.0008807
+p-value by method (H0: coef = 0):
+method       MBB_L2  MBB_L3  MBB_L4  district_CR  driscoll_kraay  twoway_CR  wild_district  year_CR
+term                                                                                               
+trend        0.6890  0.9260  0.9830       0.1483          0.4058     0.3769            NaN   0.3192
+R_season     0.0880  0.0400  0.0020       0.0000          0.0018     0.0204         0.0004   0.0478
+R_season_sq  0.1680  0.0930  0.0100       0.0004          0.0114     0.0923         0.0038   0.1314
+Squared term (R_season_sq = 0): year-CR Wald chi2(1) = 2.2953, F = 2.2953, p[F(1,15)] = 0.1506; classical F = 7.0372, p[F(1,192)] = 0.0087 (iid errors; not in verdict)
+LINEAR vs QUADRATIC at alpha = 0.05: INCONCLUSIVE (methods disagree)
+  p by method: district_CR 0.0004*, wild_district 0.0038*, year_CR 0.1314, twoway_CR 0.0923, driscoll_kraay 0.0114*, MBB_L3 0.0930   (* = significant)
+  sensitivity (not in verdict): MBB_L2 0.1680, MBB_L4 0.0100
   turning point -b1/(2 b2) = 1199.9 mm (max); observed 398.8-1360.0 mm
-LOYO: RMSE ln = nan  RMSE kg/ha = 456.7  MAE kg/ha = 357.4
+LOYO: RMSE ln = nan; RMSE kg/ha naive = 456.7, smeared = nan (mean Duan factor nan)
 
---------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 MODEL trend_only  [reference (no rainfall)]  outcome=ln_yield  regressors=['trend']
---------------------------------------------------------------------------------------------
-            coef  se_cluster_year       t         p
-trend -0.0351353        0.0192977 -1.8207 0.0701934
+----------------------------------------------------------------------------------------------------
 within R2 = 0.1055  N = 208  districts = 13  SSR = 46.2861  k = 14  llf = -138.859  AIC = 305.717  BIC = 352.443
-LOYO: RMSE ln = 0.5246  RMSE kg/ha = 510.0  MAE kg/ha = 412.7  (ln models: kg/ha via exp(pred) x Duan smearing factor)
+coef:  trend = -0.0351353
+SE by method:
+method  district_CR  driscoll_kraay  twoway_CR  year_CR
+term                                                   
+trend       0.00717         0.02234    0.01939   0.0193
+p-value by method (H0: coef = 0):
+method  district_CR  driscoll_kraay  twoway_CR  year_CR
+term                                                   
+trend        0.0000          0.1174     0.0716   0.0702
+LOYO: RMSE ln = 0.5246; RMSE kg/ha naive = 501.8, smeared = 510.0 (mean Duan factor 1.1091)
 
---------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 MODEL trend_only_level  [reference (no rainfall)]  outcome=yield_kgha  regressors=['trend']
---------------------------------------------------------------------------------------------
-          coef  se_cluster_year        t        p
-trend -19.8182          16.4811 -1.20248 0.230644
+----------------------------------------------------------------------------------------------------
 within R2 = 0.0439  N = 208  districts = 13  SSR = 3.78445e+07  k = 14  llf = -1554.731  AIC = 3137.462  BIC = 3184.187
-LOYO: RMSE ln = nan  RMSE kg/ha = 472.1  MAE kg/ha = 390.9
+coef:  trend = -19.8182
+SE by method:
+method  district_CR  driscoll_kraay  twoway_CR  year_CR
+term                                                   
+trend         7.598           18.93      17.13    16.48
+p-value by method (H0: coef = 0):
+method  district_CR  driscoll_kraay  twoway_CR  year_CR
+term                                                   
+trend        0.0098          0.2965     0.2488   0.2306
+LOYO: RMSE ln = nan; RMSE kg/ha naive = 472.1, smeared = nan (mean Duan factor nan)
 
-============================================================================================
+====================================================================================================
 MODEL COMPARISON (AIC/BIC comparable only within the same outcome)
-           model    outcome  within_r2       aic       bic  loyo_rmse_ln  loyo_rmse_kgha  loyo_mae_kgha  sq_F_cluster_p  sq_F_classic_p
-          linear   ln_yield     0.2364  274.8094  324.8725        0.4901        561.4968       398.5117             NaN             NaN
-       quadratic   ln_yield     0.2618  269.7652  323.1658        0.4918        543.5339       391.2867          0.1450          0.0109
-    linear_level yield_kgha     0.1465 3115.8456 3165.9087           NaN        454.0668       361.1739             NaN             NaN
- quadratic_level yield_kgha     0.1767 3110.3584 3163.7590           NaN        456.6545       357.3609          0.1506          0.0087
-      trend_only   ln_yield     0.1055  305.7174  352.4429        0.5246        509.9646       412.7300             NaN             NaN
-trend_only_level yield_kgha     0.0439 3137.4619 3184.1874           NaN        472.1104       390.9222             NaN             NaN
+           model    outcome  within_r2       aic       bic  loyo_rmse_ln  loyo_rmse_kgha_naive  loyo_rmse_kgha_smeared  loyo_mae_kgha_naive  loyo_mae_kgha_smeared
+          linear   ln_yield     0.2364  274.8094  324.8725        0.4901              541.3443                561.4968             397.0851               398.5117
+       quadratic   ln_yield     0.2618  269.7652  323.1658        0.4918              525.4807                543.5339             388.3946               391.2867
+    linear_level yield_kgha     0.1465 3115.8456 3165.9087           NaN              454.0668                     NaN             361.1739                    NaN
+ quadratic_level yield_kgha     0.1767 3110.3584 3163.7590           NaN              456.6545                     NaN             357.3609                    NaN
+      trend_only   ln_yield     0.1055  305.7174  352.4429        0.5246              501.7684                509.9646             408.4714               412.7300
+trend_only_level yield_kgha     0.0439 3137.4619 3184.1874           NaN              472.1104                     NaN             390.9222                    NaN
 
-LOYO RMSE by held-out year (kg/ha):
+Held-out comparison in kg/ha (SPEC A9): log models vs trend-only, naive vs Duan-smeared:
+  linear    naive  : RMSE 541.3 vs trend-only 501.8 -> worse by 39.6 kg/ha
+  linear    smeared: RMSE 561.5 vs trend-only 510.0 -> worse by 51.5 kg/ha
+  quadratic naive  : RMSE 525.5 vs trend-only 501.8 -> worse by 23.7 kg/ha
+  quadratic smeared: RMSE 543.5 vs trend-only 510.0 -> worse by 33.6 kg/ha
+  level models (no back-transform): linear_level 454.1, quadratic_level 456.7, trend_only_level 472.1
+
+LINEAR vs QUADRATIC VERDICTS
+  quadratic: INCONCLUSIVE (methods disagree)
+  quadratic_level: INCONCLUSIVE (methods disagree)
+
+LOYO RMSE by held-out year (kg/ha, ln models smeared):
 model  linear  linear_level  quadratic  quadratic_level  trend_only  trend_only_level
 year                                                                                 
 2000    484.7         388.4      466.2            394.1       481.8             339.9
@@ -102,7 +162,9 @@ year
 2014    368.1         451.1      371.1            452.4       484.7             570.1
 2015    386.2         457.1      419.1            460.0       472.9             576.3
 table -> outputs/prototype/tables/06_models_coefficients.csv
+table -> outputs/prototype/tables/06_models_se_comparison.csv
 table -> outputs/prototype/tables/06_models_fit_stats.csv
+table -> outputs/prototype/tables/06_models_linear_vs_quadratic.csv
 table -> outputs/prototype/tables/06_models_loyo_by_year.csv
 Results are associations under the model's assumptions; fixed effects remove only time-invariant district confounders.
 PROTOTYPE - NOT FOR THE REPORT: rainfall is subdivision-level and has no temperature.

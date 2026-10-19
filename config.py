@@ -101,3 +101,47 @@ WEAK_MONSOON_FRACTIONS = [0.9, 0.8]
 
 # Number of grid points for the 100 mm effect across the observed rainfall range.
 RANGE_GRID_POINTS = 50
+
+# ---- Amendments 2026-10-19 (A7-A10, see docs/SPEC.md) ------------------------------
+# A7 inference
+BLOCK_LENGTH = 3                      # moving-block bootstrap over years (headline)
+BLOCK_LENGTH_SENSITIVITY = [2, 4]
+N_BOOT_BLOCK = 2000
+BOOT_SEEDS = {                        # one seed per resampling scheme; same draws in src/06 and src/08
+    "block_L2": 2802,
+    "block_L3": 2803,
+    "block_L4": 2804,
+    "districts": 2810,
+    "wild": 2820,                     # used only if the wild bootstrap cannot enumerate all sign vectors
+}
+DK_MAXLAGS = 2                        # Driscoll-Kraay Bartlett kernel, lags 0..2
+WILD_ENUMERATE_MAX_CLUSTERS = 14      # enumerate all 2^G Rademacher vectors when G <= this
+N_WILD = 9999                         # random wild draws otherwise
+ALPHA = 0.05
+
+# A10 robustness: selected districts whose old boundaries include a later split.
+BOUNDARY_SENSITIVE_DISTRICTS = ["Akola", "Parbhani", "Osmanabad", "Chandrapur"]
+
+# A10 old-to-new district crosswalk: (current district, ICRISAT district, status, note).
+# Statuses: CONFIRMED_OFFICIAL_PAGE, CAVEAT, UNVERIFIED. A current district whose name equals an
+# ICRISAT district maps to itself and needs no row. src/05 refuses to write panel_final.csv if any
+# row it uses is UNVERIFIED.
+_SRC = ("Maharashtra government district-history page cited in the teammate's report; "
+        "not independently verified")
+DISTRICT_CROSSWALK = [
+    ("Latur", "Osmanabad", "CONFIRMED_OFFICIAL_PAGE", _SRC),
+    ("Gadchiroli", "Chandrapur", "CONFIRMED_OFFICIAL_PAGE", _SRC),
+    ("Nandurbar", "Dhule", "CONFIRMED_OFFICIAL_PAGE", _SRC),
+    ("Hingoli", "Parbhani", "CONFIRMED_OFFICIAL_PAGE", _SRC),
+    ("Gondia", "Bhandara", "CONFIRMED_OFFICIAL_PAGE", _SRC),
+    ("Jalna", "Aurangabad", "CONFIRMED_OFFICIAL_PAGE",
+     _SRC + ". CAVEAT: Jalna also took Partur taluka from Parbhani; a whole-district dissolve assigns it to Aurangabad"),
+    ("Palghar", "Thane", "CONFIRMED_OFFICIAL_PAGE", _SRC),
+    ("Washim", "Akola", "CAVEAT", "parent area needs taluka-level confirmation"),
+    # Not covered by the team lead's list: UNVERIFIED until confirmed.
+    ("Mumbai Suburban", "Bombay", "UNVERIFIED", "candidate pair"),
+    ("Mumbai City", "Bombay", "UNVERIFIED", "candidate pair"),
+    ("Dharashiv", "Osmanabad", "UNVERIFIED", "rename (2023), my addition; confirm against the boundary file"),
+    ("Chhatrapati Sambhajinagar", "Aurangabad", "UNVERIFIED", "rename (2023), my addition; confirm"),
+    ("Ahilyanagar", "Ahmednagar", "UNVERIFIED", "rename (2024), my addition; confirm"),
+]

@@ -12,6 +12,13 @@ Variants (SPEC Amendments 2026-10-18):
   A6  trend_none / trend_district / year_fe   (year_fe only if rainfall is district-level)
   windows                      R = Jun-Jul (R_early), Jul-Sep (R_julsep), Jun-Sep (R_season = base)
   drop_<year>                  drop each DROUGHT_YEARS year in turn
+  A10 drop_boundary_sensitive  drop BOUNDARY_SENSITIVE_DISTRICTS (Akola, Parbhani, Osmanabad, Chandrapur)
+
+Area-weighting investigation (SPEC A9), linear model: weight concentration (district and year shares of
+total area weight, Kish effective number of districts), decomposition into cross-district weights
+(district mean area, constant over time) and within-district weights (area / district mean area),
+district-specific rainfall slopes and their unweighted vs area-weighted averages, and
+leave-one-district-out under area weights.
 
 Summary effect per variant: 100 mm deficit in the model's rainfall window, evaluated at Rbar = mean over
 districts of each district's mean rainfall in that variant's sample. pct = exp(delta) - 1, with a 95%
@@ -41,6 +48,104 @@ def summarise(res, df: pd.DataFrame, var: str, sq: bool) -> dict:
         out.update({"b_R_sq": res.params[f"{var}_sq"], "se_R_sq": res.std_errors[f"{var}_sq"],
                     "p_R_sq": res.pvalues[f"{var}_sq"]})
     return out
+
+
+def pct100(b: float) -> float:
+    return float(np.exp(-C.RAIN_SHOCK_MM * b) - 1)
+
+
+def area_weighting_investigation(p: pd.DataFrame, out, plt) -> None:
+    """Why does area weighting move the 100 mm effect (SPEC A9)? Linear model in R_season."""
+    out.log("\n" + "=" * 92)
+    out.log("AREA-WEIGHTING INVESTIGATION (SPEC A9), linear model in R_season")
+    out.log("=" * 92)
+    q = p.copy()
+    q["w_area"] = q.area_kha
+    q["w_between"] = q.groupby("district").area_kha.transform("mean")      # cross-district only
+    q["w_within"] = q.area_kha / q.w_between                               # over time only
+    # 1. Weight concentration
+    dsh = q.groupby(["district", "subdivision"]).area_kha.sum().reset_index(name="weight")
+    dsh["share"] = dsh.weight / dsh.weight.sum()
+    dsh = dsh.sort_values("share", ascending=False)
+    kish = 1.0 / np.sum(dsh.share ** 2)
+    sub = dsh.groupby("subdivision").share.sum()
+    ysh = q.groupby("year").area_kha.sum()
+    ysh = ysh / ysh.sum()
+    half = int(np.median(q.year))
+    out.log(f"Kish effective number of districts under area weights: {kish:.2f} of {len(dsh)}")
+    out.log("Weight share by subdivision: " + ", ".join(f"{U.SUB_LABEL.get(k, k)} {100 * v:.1f}%" for k, v in sub.items()))
+    out.log(f"Weight share of years > {half}: {100 * ysh[ysh.index > half].sum():.1f}% "
+            f"(unweighted: {100 * (q.year > half).mean():.1f}%)")
+    out.log("District shares of total area weight:")
+    out.log(dsh.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+
+    # 2. Decomposition
+    dec = []
+    for nm, w, desc in [("unweighted", None, "equal weights"), ("area", "w_area", "area_kha (as in area_weighted)"),
+                        ("between_only", "w_between", "district mean area, constant over time"),
+                        ("within_only", "w_within", "area / district mean area (time profile only)")]:
+        r = U.fit_fe(q, "ln_yield", {"R_season": False}, weights=w)
+        dec.append({"weights": nm, "definition": desc, "b_R": r.params["R_season"], "se_year_CR": r.std_errors["R_season"],
+                    "trend": r.params["trend"], "pct_100mm": pct100(r.params["R_season"])})
+    dec = pd.DataFrame(dec)
+    out.log("\nDecomposition of the weighting effect:")
+    out.log(dec.to_string(index=False, float_format=lambda x: f"{x:.5g}"))
+
+    # 3. District-specific slopes (entity effects + common trend + R x district)
+    ds = sorted(q.district.unique())
+    for d in ds:
+        q[f"Rx_{d}"] = q.R_season * (q.district == d)
+    r = U.fit_fe(q, "ln_yield", {f"Rx_{d}": False for d in ds})
+    sl = pd.DataFrame({"district": ds, "b_R_district": [r.params[f"Rx_{d}"] for d in ds],
+                       "se_year_CR": [r.std_errors[f"Rx_{d}"] for d in ds]})
+    sl = sl.merge(dsh[["district", "subdivision", "share"]], on="district")
+    sl["pct_100mm_district"] = [pct100(b) for b in sl.b_R_district]
+    vR = q.groupby("district").R_season.var()
+    sl["var_R_within"] = sl.district.map(vR)
+    avg = {"unweighted mean of district slopes": sl.b_R_district.mean(),
+           "area-share-weighted mean of district slopes": float(np.sum(sl.share * sl.b_R_district)),
+           "pooled unweighted (base)": float(dec.b_R[dec.weights == "unweighted"].iat[0]),
+           "pooled area-weighted": float(dec.b_R[dec.weights == "area"].iat[0])}
+    corr = float(np.corrcoef(sl.share, sl.b_R_district)[0, 1])
+    out.log(f"\nDistrict-specific rainfall slopes (common trend; within R2 = {r.rsquared_within:.4f}):")
+    out.log(sl.sort_values("share", ascending=False).to_string(index=False, float_format=lambda x: f"{x:.5g}"))
+    for k, v in avg.items():
+        out.log(f"  {k:45s} b = {v:.6g}  -> 100 mm: {100 * pct100(v):+.2f}%")
+    out.log(f"  correlation(area share, district slope) = {corr:.3f}")
+
+    # 4. Leave-one-district-out under area weights
+    lodo = []
+    for d in ds:
+        rr = U.fit_fe(q[q.district != d], "ln_yield", {"R_season": False}, weights="w_area")
+        lodo.append({"dropped": d, "share_of_weight": float(dsh.set_index("district").share[d]),
+                     "b_R": rr.params["R_season"], "pct_100mm": pct100(rr.params["R_season"])})
+    lodo = pd.DataFrame(lodo).sort_values("share_of_weight", ascending=False)
+    out.log("\nLeave-one-district-out under area weights:")
+    out.log(lodo.to_string(index=False, float_format=lambda x: f"{x:.5g}"))
+
+    # pct100 is decreasing in b: the lower percent bound comes from b + 1.96 se.
+    sl["pct_lo"] = [pct100(b + 1.96 * e) for b, e in zip(sl.b_R_district, sl.se_year_CR)]
+    sl["pct_hi"] = [pct100(b - 1.96 * e) for b, e in zip(sl.b_R_district, sl.se_year_CR)]
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    for s_ in [x for x in U.SUB_ORDER if x in set(sl.subdivision)]:
+        k = sl.subdivision == s_
+        ax.errorbar(100 * sl.share[k], 100 * sl.pct_100mm_district[k],
+                    yerr=[100 * (sl.pct_100mm_district[k] - sl.pct_lo[k]), 100 * (sl.pct_hi[k] - sl.pct_100mm_district[k])],
+                    fmt=U.SUB_MARKER[s_], color=U.SUB_COLOR[s_], ms=6, lw=1, capsize=0, label=U.SUB_LABEL[s_])
+    for r_ in sl.itertuples():
+        ax.annotate(r_.district, (100 * r_.share, 100 * r_.pct_100mm_district), fontsize=7, color=U.INK2,
+                    xytext=(4, 2), textcoords="offset points")
+    for k, ls in [("pooled unweighted (base)", "--"), ("pooled area-weighted", ":")]:
+        ax.axhline(100 * pct100(avg[k]), color=U.INK2, lw=1, ls=ls)
+        ax.text(ax.get_xlim()[1], 100 * pct100(avg[k]), f" {k}", fontsize=7, color=U.INK2, va="center")
+    ax.axhline(0, color=U.INK, lw=1)
+    ax.set(title="District-specific 100 mm effects vs share of area weight",
+           xlabel="Share of total area weight (%)", ylabel="Yield change for a 100 mm deficit (%)")
+    ax.legend(frameon=False, loc="upper center")
+    out.log(f"figure -> {U.rel(out.figure(fig, 'area_weighting'))}")
+    for df, nm in [(dsh, "weight_shares"), (dec, "weighting_decomposition"), (sl, "district_slopes"),
+                   (lodo, "weighted_leave_one_district_out")]:
+        out.log(f"table -> {U.rel(out.table(df, nm))}")
 
 
 def main() -> None:
@@ -86,6 +191,11 @@ def main() -> None:
         else:
             skipped.append({"variant": f"drop_{y}", "group": "drop drought year", "note": f"SKIPPED: {y} not in panel"})
 
+    keep = p[~p.district.isin(C.BOUNDARY_SENSITIVE_DISTRICTS)]
+    assert set(C.BOUNDARY_SENSITIVE_DISTRICTS) <= set(p.district)
+    variants.append(("drop_boundary_sensitive", "A10 boundaries", keep, "R_season", "common", None,
+                     "drops " + ", ".join(C.BOUNDARY_SENSITIVE_DISTRICTS)))
+
     rows = []
     for name, group, df, var, trend, wts, note in variants:
         for form, sq in FORMS.items():
@@ -119,6 +229,8 @@ def main() -> None:
     out.log(f"table -> {U.rel(out.table(tab, 'results'))}")
     if skipped:
         out.log(f"table -> {U.rel(out.table(pd.DataFrame(skipped), 'skipped'))}")
+
+    area_weighting_investigation(p, out, plt)
 
     fig, axes = plt.subplots(1, 2, figsize=(11, 0.42 * tab.variant.nunique() + 1.5), sharey=True)
     names = list(dict.fromkeys(tab.variant))

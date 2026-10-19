@@ -181,9 +181,18 @@ def design(p: pd.DataFrame, rain: dict, trend: str = "common") -> tuple[pd.DataF
     return X, time_effects
 
 
+COV_METHODS = {  # name -> PanelOLS.fit keyword arguments
+    "year_CR": {"cov_type": "clustered", "cluster_time": True},
+    "district_CR": {"cov_type": "clustered", "cluster_entity": True},
+    "twoway_CR": {"cov_type": "clustered", "cluster_entity": True, "cluster_time": True},
+    "driscoll_kraay": {"cov_type": "kernel", "kernel": "bartlett", "bandwidth": C.DK_MAXLAGS},
+}
+
+
 def fit_fe(p: pd.DataFrame, outcome: str, rain: dict, trend: str = "common", weights: str | None = None,
-           entity: str = "district", time: str = "year"):
-    """PanelOLS with entity effects, the chosen trend, SEs clustered by year."""
+           entity: str = "district", time: str = "year", cov: str = "year_CR"):
+    """PanelOLS with entity effects and the chosen trend. Default SEs clustered by year;
+    cov selects another method from COV_METHODS."""
     d = p.set_index([entity, time])
     X, te = design(d.reset_index(), rain, trend)
     X.index = d.index
@@ -191,7 +200,111 @@ def fit_fe(p: pd.DataFrame, outcome: str, rain: dict, trend: str = "common", wei
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         mod = PanelOLS(d[outcome], X, entity_effects=True, time_effects=te, weights=w)
-        return mod.fit(cov_type="clustered", cluster_time=True)
+        return mod.fit(**COV_METHODS[cov])
+
+
+class FastFE:
+    """Array version of the within estimator (district effects + common trend + rain terms) for
+    bootstraps. fit(rows, codes) refits the full model on the rows `rows` of the panel, with entity
+    codes `codes` (so a district drawn twice can be two entities). Same estimates as PanelOLS."""
+
+    def __init__(self, p: pd.DataFrame, outcome: str, rain: dict):
+        X, _ = design(p, rain, "common")
+        self.cols = list(X.columns)
+        self.X = X.to_numpy(float)
+        self.y = p[outcome].to_numpy(float)
+        self.codes = pd.factorize(p.district)[0]
+
+    def fit(self, rows: np.ndarray, codes: np.ndarray | None = None) -> np.ndarray:
+        codes = self.codes[rows] if codes is None else codes
+        X, y = self.X[rows], self.y[rows]
+        cnt = np.bincount(codes)
+        Xm = np.column_stack([np.bincount(codes, X[:, j]) / cnt for j in range(X.shape[1])])
+        Z = X - Xm[codes]
+        yz = y - (np.bincount(codes, y) / cnt)[codes]
+        return np.linalg.lstsq(Z, yz, rcond=None)[0]
+
+
+def year_rows(p: pd.DataFrame) -> tuple[np.ndarray, list]:
+    """Sorted years and, for each, the row positions of that year in p."""
+    years = np.sort(p.year.unique())
+    return years, [np.flatnonzero(p.year.to_numpy() == y) for y in years]
+
+
+def block_draws(n_years: int, L: int, B: int, seed: int) -> np.ndarray:
+    """Moving-block bootstrap (Kunsch 1989), non-circular: draw ceil(T/L) block starts uniformly from
+    0..T-L, concatenate blocks of L consecutive years, truncate to T. Returns (B, T) year positions.
+    L = 1 is the iid year bootstrap."""
+    rng = np.random.default_rng(seed)
+    nb = int(np.ceil(n_years / L))
+    starts = rng.integers(0, n_years - L + 1, size=(B, nb))
+    pos = (starts[:, :, None] + np.arange(L)[None, None, :]).reshape(B, nb * L)
+    return pos[:, :n_years]
+
+
+def rows_from_year_draw(yrows: list, draw: np.ndarray) -> np.ndarray:
+    """Rows for one year draw. Districts keep their codes; each drawn year keeps its original trend."""
+    return np.concatenate([yrows[k] for k in draw])
+
+
+def district_draws(n_districts: int, B: int, seed: int) -> np.ndarray:
+    return np.random.default_rng(seed).integers(0, n_districts, size=(B, n_districts))
+
+
+def rows_from_district_draw(p: pd.DataFrame, draw: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Rows and new entity codes (draw position) for one district draw."""
+    codes0 = pd.factorize(p.district)[0]
+    drows = [np.flatnonzero(codes0 == d) for d in range(codes0.max() + 1)]
+    rows = [drows[d] for d in draw]
+    return np.concatenate(rows), np.concatenate([np.full(len(r), k) for k, r in enumerate(rows)])
+
+
+def wild_cluster_test(p: pd.DataFrame, outcome: str, rain: dict, term: str) -> dict:
+    """Wild cluster restricted (WCR) bootstrap-t test of H0: beta_term = 0, clusters = districts,
+    Rademacher weights (Cameron, Gelbach and Miller 2008). Works on the district-demeaned data (FWL),
+    so the district effects are re-estimated implicitly. Enumerates all 2^G sign vectors when
+    G <= WILD_ENUMERATE_MAX_CLUSTERS (exact, no seed); otherwise N_WILD draws with BOOT_SEEDS['wild'].
+    The CR small-sample factor cancels between t and t*, so it is omitted."""
+    fe = FastFE(p, outcome, rain)
+    rows = np.arange(len(p))
+    codes = fe.codes
+    cnt = np.bincount(codes)
+    Z = fe.X - np.column_stack([np.bincount(codes, fe.X[:, j]) / cnt for j in range(fe.X.shape[1])])[codes]
+    yz = fe.y - (np.bincount(codes, fe.y) / cnt)[codes]
+    j = fe.cols.index(term)
+    keep = [i for i in range(Z.shape[1]) if i != j]
+    br = np.linalg.lstsq(Z[:, keep], yz, rcond=None)[0]
+    yhat_r = Z[:, keep] @ br
+    u_r = yz - yhat_r
+    A = np.linalg.inv(Z.T @ Z)
+    w = Z @ A[j]
+    G = cnt.size
+    ind = np.zeros((G, len(rows)))
+    ind[codes, rows] = 1.0
+
+    def tstat(Y):
+        Bh = A @ (Z.T @ Y)
+        E = Y - Z @ Bh
+        S = ind @ (w[:, None] * E)
+        return Bh[j] / np.sqrt((S ** 2).sum(axis=0))
+
+    t0 = float(tstat(yz[:, None])[0])
+    if G <= C.WILD_ENUMERATE_MAX_CLUSTERS:
+        V = 1.0 - 2.0 * ((np.arange(2 ** G)[None, :] >> np.arange(G)[:, None]) & 1)
+        how = f"all 2^{G} = {2 ** G} Rademacher sign vectors (exact)"
+    else:
+        V = np.random.default_rng(C.BOOT_SEEDS["wild"]).choice([-1.0, 1.0], size=(G, C.N_WILD))
+        how = f"{C.N_WILD} random Rademacher draws, seed {C.BOOT_SEEDS['wild']}"
+    tb = tstat(yhat_r[:, None] + u_r[:, None] * V[codes, :])
+    return {"t": t0, "p": float(np.mean(np.abs(tb) >= abs(t0))), "clusters": G, "draws": how}
+
+
+def boot_summary(draws: np.ndarray, point: float) -> dict:
+    """SE, 95% percentile CI and a two-sided percentile p-value for H0: 0
+    (p = 2 x min(share <= 0, share >= 0), capped at 1)."""
+    d = draws[np.isfinite(draws)]
+    return {"se": float(d.std(ddof=1)), "lo": float(np.percentile(d, 2.5)), "hi": float(np.percentile(d, 97.5)),
+            "p": float(min(1.0, 2 * min(np.mean(d <= 0), np.mean(d >= 0)))), "n": int(d.size)}
 
 
 def fe_params_fast(p: pd.DataFrame, outcome: str, rain: dict, entity: str = "district") -> pd.Series:

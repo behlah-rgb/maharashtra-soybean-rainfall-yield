@@ -102,3 +102,33 @@ Format for each entry:
 - Why: the report must only draw from outputs/final; writing the mapping now makes that traceable.
 - Result: done. Nothing run on gridded data; nothing committed. Stopped here as instructed.
 - Problems / deviations: the 16 headings were not specified, so I chose them; flagged for the user.
+
+## 2026-10-19 - team-lead amendments A7-A10 recorded
+- Done: SPEC.md "Amendments 2026-10-19" (A7-A10), notes.md entry.
+- Why: decisions from the team lead. A7 responds to the serial-correlation and cross-sectional-dependence findings of src/07; A8 is the professor's format; A9 settles the kg/ha baseline and adds follow-ups; A10 replaces the blanket UNVERIFIED status with sourced statuses.
+- Result: recorded. Implementation follows below.
+- Problems / deviations: the verdict rule in A7 ("must hold across these") is read as covering district CR, wild cluster bootstrap, year CR, two-way CR, Driscoll-Kraay and MBB L = 3. MBB L = 2 and 4 are reported as sensitivity, not part of the verdict.
+
+## 2026-10-19 - A7 inference: src/pipeline_utils.py, src/06, src/08
+- Done: added COV_METHODS (year, district, two-way CR; Driscoll-Kraay), FastFE, block_draws (MBB), district draws, wild_cluster_test (WCR, exact enumeration), boot_summary. 06 now reports every SE method side by side and a linear-vs-quadratic verdict; 08 headline intervals are MBB L = 3 with L = 2, 4 and the district bootstrap as checks. All seeds in config.BOOT_SEEDS.
+- Why: src/07 found serial correlation and cross-sectional dependence; MBB keeps both. Exact enumeration makes the wild p-value seed-free with 13 clusters. The verdict covers the six methods in A7; MBB L = 2/4 are sensitivity only.
+- Result (prototype): verdict INCONCLUSIVE for ln and kg/ha models (squared-term p: district CR 0.0001, wild 0.006, DK 0.019 vs year CR 0.126, two-way 0.066, MBB L3 0.148). Linear b1 p under MBB L3 = 0.067. State 100 mm effect: linear -9.9% [MBB L3 -15.4, +0.8]; quadratic -12.7% [-18.5, -2.1]. Point estimates unchanged from 2026-10-18. Runtime: 06 ~1 s, 08 ~4 s.
+- Problems / deviations: the headline interval for the linear 100 mm effect now includes zero in the prototype. This changes the reading of the prototype results and should be noted for the final panel.
+
+## 2026-10-19 - A9: Duan smearing and area-weighting investigation
+- Done: 06 LOYO reports kg/ha RMSE/MAE naive and smeared for log models and trend-only. 09 adds weight shares, Kish effective N, a between/within weighting decomposition, district-specific slopes and weighted leave-one-district-out (4 tables + 1 figure). 08 states the kg/ha baseline in its log, table column and figure title.
+- Why: A9 asks why weighting moves the effect most; separating cross-district from over-time weighting shows which channel acts.
+- Result: smearing worsens kg/ha RMSE (both versions worse than trend-only). The weighting shift comes from both channels (between-only -12.1%, within-only -11.5%, both -13.2%, base -9.9%). Kolhapur/Sangli have the only non-negative district slopes and only 5% of the weight.
+- Problems / deviations: the negative-trend re-examination waits for 2016-17 (HANDOFF).
+
+## 2026-10-19 - A10: crosswalk guard and boundary variant
+- Done: config.DISTRICT_CROSSWALK with statuses; src/05 crosswalk_table() and check_crosswalk() implemented as real code (no gridded data needed) and tested with 4 cases; dissolve docstring updated. 09 adds drop_boundary_sensitive.
+- Why: replaces the blanket UNVERIFIED rule with sourced statuses. The guard is "used-pair" based, so unused UNVERIFIED rows (Mumbai, renames) do not block.
+- Result: guard tests pass. Boundary variant: linear -8.4%, quadratic -11.0% (base -9.9%, -12.8%).
+- Problems / deviations: I added rename rows (Dharashiv, Chhatrapati Sambhajinagar, Ahilyanagar) as UNVERIFIED. They are not from the team lead. Flagged.
+
+## 2026-10-19 - src/03 CLI; report structure A8; docs
+- Done: 03 takes <panel> <outdir> with the outputs/final guard; verified its outputs are byte/pixel-identical on panel_v1; also ran into outputs/prototype. Reran 07 (outputs identical). report/report.md rewritten to the professor's structure with feeding scripts/files per subsection. README run commands, HANDOFF updated.
+- Why: A8 and the team lead's request; the identical-output check shows the conversion did not change any result.
+- Result: done. Nothing run on gridded data; nothing committed.
+- Problems / deviations: none.

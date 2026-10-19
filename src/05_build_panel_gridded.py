@@ -82,19 +82,73 @@ def read_imd_rain_grid(path: Path, years=range(C.YEAR_START, C.YEAR_END_TARGET +
     raise NotImplementedError("skeleton: waiting for IMD 0.25 degree grids")
 
 
+CROSSWALK_STATUSES = ("CONFIRMED_OFFICIAL_PAGE", "CAVEAT", "UNVERIFIED")
+
+
+def crosswalk_table() -> pd.DataFrame:
+    """Old-to-new district crosswalk from config.DISTRICT_CROSSWALK (SPEC A10). Implemented (not a
+    skeleton): it needs no gridded data. Columns: current_district, icrisat_district, status, note."""
+    cw = pd.DataFrame(C.DISTRICT_CROSSWALK, columns=["current_district", "icrisat_district", "status", "note"])
+    bad = set(cw.status) - set(CROSSWALK_STATUSES)
+    assert not bad, f"unknown crosswalk status: {bad}"
+    assert not cw.current_district.duplicated().any(), "a current district appears twice in the crosswalk"
+    known = {d for ds in C.DISTRICT_SUBDIVISION.values() for d in ds}
+    unknown = set(cw.icrisat_district) - known
+    assert not unknown, f"crosswalk targets not in the ICRISAT district map: {unknown}"
+    return cw
+
+
+def check_crosswalk(current_districts, panel_districts) -> pd.DataFrame:
+    """Guard for writing panel_final.csv (SPEC A10). Implemented (not a skeleton).
+
+    current_districts : district names in the boundary file (current boundaries).
+    panel_districts   : ICRISAT districts in the panel being written.
+    A current district maps to itself if its name is an ICRISAT district; otherwise it needs a
+    crosswalk row. Returns the rows used (current district -> panel district). Raises if a current
+    district is unmapped, or if any row used for a panel district has status UNVERIFIED.
+    CAVEAT rows are allowed but returned so the caller can log them.
+    """
+    cw = crosswalk_table().set_index("current_district")
+    known = {d for ds in C.DISTRICT_SUBDIVISION.values() for d in ds}
+    used, unmapped = [], []
+    for cur in current_districts:
+        if cur in cw.index:
+            r = cw.loc[cur]
+            used.append({"current_district": cur, "icrisat_district": r.icrisat_district, "status": r.status,
+                         "note": r.note})
+        elif cur in known:
+            used.append({"current_district": cur, "icrisat_district": cur, "status": "SAME_NAME", "note": ""})
+        else:
+            unmapped.append(cur)
+    if unmapped:
+        raise ValueError(f"current districts with no ICRISAT parent (add them to config.DISTRICT_CROSSWALK): "
+                         f"{sorted(unmapped)}")
+    u = pd.DataFrame(used)
+    u = u[u.icrisat_district.isin(set(panel_districts))]
+    missing = set(panel_districts) - set(u.icrisat_district)
+    if missing:
+        raise ValueError(f"panel districts with no polygon in the boundary file: {sorted(missing)}")
+    blocked = u[u.status == "UNVERIFIED"]
+    if len(blocked):
+        raise ValueError("REFUSED to write panel_final.csv: UNVERIFIED crosswalk pairs are used:\n"
+                         + blocked.to_string(index=False))
+    return u
+
+
 def dissolve_to_icrisat_districts(boundaries_path: Path, old_new_map_path: Path):
     """Dissolve current district polygons into the older ICRISAT district boundaries.
 
     Parameters
     ----------
     boundaries_path : current district boundary file (shapefile / GeoJSON / GeoPackage).
-    old_new_map_path : CSV of (current_district, icrisat_district, status), built from the teammate's
-        old-to-new district notes. UNVERIFIED candidate pairs (not yet confirmed by the teammate;
-        SPEC A5): Washim -> Akola, Hingoli -> Parbhani, Gondia -> Bhandara, Nandurbar -> Dhule,
-        Latur -> Osmanabad, Jalna -> Aurangabad/Parbhani, Palghar -> Thane, Mumbai Suburban -> Bombay.
-        The CSV must carry status = UNVERIFIED for every pair until the teammate confirms it; the
-        build must refuse to write panel_final.csv while any pair used by a selected district is
-        UNVERIFIED. Record splits that crossed old district lines.
+    old_new_map_path : optional CSV override; by default the crosswalk is config.DISTRICT_CROSSWALK
+        via crosswalk_table() (SPEC A10). Statuses: CONFIRMED_OFFICIAL_PAGE (Latur->Osmanabad,
+        Gadchiroli->Chandrapur, Nandurbar->Dhule, Hingoli->Parbhani, Gondia->Bhandara,
+        Jalna->Aurangabad, Palghar->Thane; source: official district-history pages cited in the
+        teammate's report, not independently verified), CAVEAT (Washim->Akola needs taluka-level
+        confirmation; Jalna's Partur taluka came from Parbhani), UNVERIFIED (everything else,
+        e.g. Mumbai Suburban->Bombay and the 2023-24 renames). Call check_crosswalk() before
+        dissolving; it refuses only if a pair used for a panel district is UNVERIFIED.
 
     Returns
     -------

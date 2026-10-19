@@ -63,3 +63,26 @@ Additional specification items implied by the build requested with these amendme
 - Model comparison: F-test on squared terms (clustered Wald and classical F), within R2, AIC/BIC from the Gaussian log-likelihood of the within model, and leave-one-year-out prediction error. Robustness outcome yield in kg/ha is fitted in src/06.
 - Scenarios (src/08): the 100 mm deficit per district and per subdivision at each district's mean rainfall and across the observed rainfall range. Bootstrap by years (main) and by districts (check). Illustrative weak-monsoon scenarios at 90% and 80% of each district's mean rainfall. Results in percent and in kg/ha.
 - Robustness (src/09): A2a, A2b, A5 wider set, A6 trend variants, alternative rainfall windows (Jun-Jul, Jul-Sep, Jun-Sep), and dropping each drought year (2009, 2014, 2015) in turn.
+
+## Amendments 2026-10-19 (team lead, A7-A10)
+
+A7. **Inference.**
+- Headline intervals: moving-block bootstrap (MBB) over years. Whole years are resampled in blocks of consecutive years, with all districts of a year together. The full model (district effects + common trend + rainfall terms) is refitted in every replication. Block length 3; sensitivity 2 and 4; 2000 replications; seeds recorded in config.py (BOOT_SEEDS). This replaces the iid year bootstrap of src/08 (2026-10-18) as the headline interval. The district bootstrap stays as a check.
+- Reported side by side for the coefficients: district-clustered SEs (plus a wild cluster bootstrap by district), year-clustered, two-way clustered (district and year), and Driscoll-Kraay (Bartlett kernel, maxlags 2). Driscoll-Kraay is flagged as unreliable at T = 18 (and at T = 16 in the prototype).
+- Linear vs quadratic: the conclusion on the squared term must be the same under every one of these methods (district-clustered, wild cluster bootstrap, year-clustered, two-way, Driscoll-Kraay, MBB L = 3) at the 5% level. Otherwise it is reported as INCONCLUSIVE. MBB L = 2 and 4 are reported as sensitivity.
+
+A8. **Report structure (professor's required format).** Main sections, verbatim: 1 Assumptions; 2 Estimates of parameters; 3 Numerical experiments; 4 Stability analysis; 5 Conclusion; then References and Appendix. Subsections: 1.1 Problem and research question; 1.2 Background and literature; 1.3 Data sources and panel construction; 1.4 Variables; 1.5 Model formulation; 1.6 Statistical and causal assumptions; 2.1 Estimation method; 2.2 Linear estimates; 2.3 Quadratic estimates; 2.4 Linear vs quadratic comparison; 2.5 Goodness of fit and interpretation; 3.1 100 mm deficit; 3.2 Weak-monsoon scenarios; 3.3 Response curves; 4.1 Residual diagnostics; 4.2 Leave-one-out stability; 4.3 Robustness (windows, weighting, standard errors, boundary variants); 5 Conclusion, including limitations and causal caveats. Supersedes the 16-heading skeleton of 2026-10-18.
+
+A9. **kg/ha and follow-ups.**
+- Percent is the headline unit. kg/ha baseline = the district's mean observed yield over the panel years, stated wherever kg/ha is used.
+- When log-model predictions are converted to kg/ha (including the held-out comparison with the trend-only model), Duan's smearing correction is applied. Results are shown with and without it.
+- Investigate why area weighting moves the 100 mm effect most: weight concentration and district-level effects.
+- Re-examine the negative trend once 2016-2017 are in the final panel.
+
+A10. **Crosswalk guard.** Old-to-new district pairs carry a status:
+- CONFIRMED_OFFICIAL_PAGE: Latur->Osmanabad, Gadchiroli->Chandrapur, Nandurbar->Dhule, Hingoli->Parbhani, Gondia->Bhandara, Jalna->Aurangabad, Palghar->Thane. Source: Maharashtra government district-history pages cited in the teammate's report. Not independently verified by the team lead or by me.
+- CAVEAT: Washim->Akola (parent area needs taluka-level confirmation); Jalna also took Partur taluka from Parbhani.
+- Any other pair stays UNVERIFIED. The build refuses to write panel_final.csv only if a pair it uses is UNVERIFIED.
+- Robustness (src/09): drop Akola, Parbhani, Osmanabad and Chandrapur (the selected districts whose old boundaries include a later split).
+
+Also (team lead, 2026-10-19): keep the Pesaran CD test in src/07. src/03_eda.py takes a panel path and output folder with the same outputs/final guard.
