@@ -1,0 +1,4 @@
+# FINAL: district-level gridded panel (panel_final.csv).
+variable,turning_point,shape,share_obs_below,share_obs_above,within_district_sd_pooled,mean_of_district_sds,observed_min,observed_max,districts_with_mean_above_tp
+R_season (mm),1239.9581986732544,maximum,0.9401709401709402,0.05982905982905983,188.2491887078886,188.64092561909126,198.4274495031124,1855.4725025210764,Chandrapur
+T_season (deg C),26.925902192841697,maximum,0.23076923076923078,0.7692307692307693,0.4704998445589378,0.4798465395531667,25.06159708429115,29.270129699089104,"Akola, Amarawati, Beed, Buldhana, Chandrapur, Nagpur, Nanded, Osmanabad, Parbhani, Wardha, Yeotmal"

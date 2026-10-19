@@ -9,7 +9,7 @@ Change in ln yield = lp(R_new, T_new) - lp(Rbar_d, Tbar_d), lp = fitted weather 
 (pipeline_utils.weather_lp). pct = exp(change) - 1 (headline unit); kg/ha = pct x Ybar_d.
   Variant A (headline): T_new = Tbar_d (temperature held fixed, ceteris paribus).
   Variant B (exploratory): T_new = Tbar_d + s_d (R_new - Rbar_d).
-Scenarios: deficit_100mm (R_new = Rbar_d - 100); weak_monsoon_90pct / 80pct (R_new = 0.9 / 0.8 Rbar_d),
+Scenarios: deficit_100mm (R_new = Rbar_d - 100); surplus_100mm (R_new = Rbar_d + 100; symmetry check, A14.5d); weak_monsoon_90pct / 80pct (R_new = 0.9 / 0.8 Rbar_d),
 both variants. Models: M1 and M2 (the headline pair); exploratory: M2_rain_only (variants A and B) and
 the timing model (100 mm split across Jun-Jul and Aug-Sep in proportion to each window's share of
 Rbar_d (A3); T and dry_spell_max fixed).
@@ -49,7 +49,7 @@ def scenario_effects(params: dict, c: dict, dm: pd.DataFrame, s_d: np.ndarray) -
     Rb, Tb = dm.R_season.to_numpy(), dm.T_season.to_numpy()
     Reb, Rlb = dm.R_early.to_numpy(), dm.R_late.to_numpy()
     out = {}
-    news = {"deficit_100mm": Rb - C.RAIN_SHOCK_MM}
+    news = {"deficit_100mm": Rb - C.RAIN_SHOCK_MM, "surplus_100mm": Rb + C.RAIN_SHOCK_MM}   # surplus: A14.5d symmetry
     for fr in C.WEAK_MONSOON_FRACTIONS:
         news[f"weak_monsoon_{round(100 * fr)}pct"] = fr * Rb
     for m in PAIR + ["M2_rain_only"]:
@@ -141,8 +141,9 @@ def main() -> None:
     groups.append(("ALL DISTRICTS", np.ones(n_d, bool)))
     rows = []
     for (m, sc, var), pct in pe.items():
-        role = ("HEADLINE" if (m == headline and var == "A") else "sensitivity" if m in PAIR else "exploratory")
-        lab = "ILLUSTRATIVE" if sc.startswith("weak") else "main"
+        role = ("HEADLINE" if (m == headline and var == "A" and sc == "deficit_100mm") else
+                "headline model" if (m == headline and var == "A") else "sensitivity" if m in PAIR else "exploratory")
+        lab = "ILLUSTRATIVE" if sc.startswith("weak") else "symmetry check" if sc.startswith("surplus") else "main"
         units = [("district", d.district, d.subdivision, np.arange(n_d) == i) for i, d in dm.iterrows()]
         units += [("subdivision" if g != "ALL DISTRICTS" else "state", g, g, k) for g, k in groups]
         for level, unit, sub, k in units:

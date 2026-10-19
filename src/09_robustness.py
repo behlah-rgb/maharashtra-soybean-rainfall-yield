@@ -11,6 +11,10 @@ Summary per variant: 100 mm deficit in the model's rainfall window with T fixed 
 districts of each district's effect at its own mean rainfall in the variant's sample (as in src/08). With T
 fixed the temperature terms cancel. 95% interval: delta method on the year-clustered covariance (the
 headline MBB intervals are in src/08). Centring constants: those of the main panel.
+A14.3: the rows year_fe, drop_kolhapur_sangli and area_weighted (M1 and M2) get moving-block bootstrap intervals
+(L = BLOCK_LENGTH, N_BOOT_BLOCK reps, seed BOOT_SEEDS['block_L3']; full model refitted each rep; the delta-method
+interval is kept in delta_lo/delta_hi); column interval_method says which. A14.1: variance share of
+district-demeaned R_season and T_season explained by year dummies.
 Area-weighting investigation (A9) for M1: weight concentration, between/within decomposition, district-
 specific rainfall slopes, weighted leave-one-district-out.
 """
@@ -43,6 +47,39 @@ def effect_mean(res, df: pd.DataFrame, window: str, consts: dict) -> dict:
         out.update({"b_Rc_sq": res.params["Rc_sq"], "p_Rc_sq": res.pvalues["Rc_sq"],
                     "b_Tc_sq": res.params["Tc_sq"], "p_Tc_sq": res.pvalues["Tc_sq"]})
     return out
+
+
+MBB_VARIANTS = ["year_fe", "drop_kolhapur_sangli", "area_weighted"]
+
+
+def mbb_effect(dfw: pd.DataFrame, form: str, trend: str, wts, window: str, consts: dict) -> np.ndarray:
+    """Bootstrap distribution (MBB over years) of the mean-over-districts 100 mm effect, T fixed."""
+    fe = U.FastFE(dfw, "ln_yield", U.MODELS[form]["rain"], trend="year_fe" if trend == "year_fe" else "common", weights=wts)
+    rbar = dfw.groupby("district")[window].mean().to_numpy()
+    r0 = (rbar - consts[window]) / C.RAIN_UNIT_MM
+    r1 = r0 - C.RAIN_SHOCK_MM / C.RAIN_UNIT_MM
+    years, yrows = U.year_rows(dfw)
+    draws = U.block_draws(len(years), C.BLOCK_LENGTH, C.N_BOOT_BLOCK, C.BOOT_SEEDS[f"block_L{C.BLOCK_LENGTH}"])
+    ia, ib = fe.cols.index("Rc"), (fe.cols.index("Rc_sq") if "Rc_sq" in fe.cols else None)
+    out = []
+    for d in draws:
+        rows = U.rows_from_year_draw(yrows, d)
+        b = fe.fit(rows, None, U.time_codes_from_year_draw(yrows, d))
+        delta = b[ia] * (r1 - r0) + (b[ib] * (r1 ** 2 - r0 ** 2) if ib is not None else 0.0)
+        out.append(np.mean(np.exp(delta) - 1))
+    return np.array(out)
+
+
+def variance_share(p: pd.DataFrame) -> pd.DataFrame:
+    """A14.1: share of the variance of district-demeaned R_season and T_season explained by year dummies."""
+    rows = []
+    for v in ["R_season", "T_season"]:
+        w = p[v] - p.groupby("district")[v].transform("mean")
+        yhat = w.groupby(p.year).transform("mean")                 # projection on year dummies
+        rows.append({"variable": v, "within_district_var": float(w.var(ddof=0)),
+                     "share_explained_by_year_dummies": float(((yhat - yhat.mean()) ** 2).sum() / ((w - w.mean()) ** 2).sum()),
+                     "residual_share": float(((w - yhat) ** 2).sum() / ((w - w.mean()) ** 2).sum())})
+    return pd.DataFrame(rows)
 
 
 def pct100(b: float) -> float:
@@ -175,14 +212,38 @@ def main() -> None:
             r.update(effect_mean(res, dfw, win, c))
             rows.append(r)
     tab = pd.DataFrame(rows)
+    tab["delta_lo"], tab["delta_hi"] = tab.pct_lo, tab.pct_hi
+    tab["interval_method"] = "delta method (year-clustered covariance)"
+    spec = {v[0]: v for v in V}
+    for vname in MBB_VARIANTS:
+        if vname not in spec:
+            continue
+        _, _, df, win, trend, wts, _ = spec[vname]
+        dfw = U.add_model_columns(df, c, rain_window=win)
+        for form in FORMS:
+            dist = mbb_effect(dfw, form, trend, wts, win, c)
+            k = (tab.variant == vname) & (tab.model == form)
+            point = float(tab.loc[k, "pct_100mm"].iat[0])
+            tab.loc[k, "pct_lo"] = np.percentile(dist, 2.5)
+            tab.loc[k, "pct_hi"] = np.percentile(dist, 97.5)
+            tab.loc[k, "interval_method"] = (f"moving-block bootstrap over years, L={C.BLOCK_LENGTH}, {len(dist)} reps, "
+                                             f"seed {C.BOOT_SEEDS[f'block_L{C.BLOCK_LENGTH}']}")
+            out.log(f"MBB {vname} {form}: point {100 * point:+.2f}%, bootstrap median {100 * np.median(dist):+.2f}%, "
+                    f"95% [{100 * np.percentile(dist, 2.5):+.2f}, {100 * np.percentile(dist, 97.5):+.2f}] "
+                    f"(delta method was [{100 * tab.loc[k, 'delta_lo'].iat[0]:+.2f}, {100 * tab.loc[k, 'delta_hi'].iat[0]:+.2f}])")
+    vs = variance_share(p)
+    out.log("\nVARIANCE SHARE (A14.1): district-demeaned weather explained by year dummies")
+    out.log(vs.to_string(index=False, float_format=lambda x: f"{x:.4f}"))
+    out.log(f"table -> {U.rel(out.table(vs, 'variance_share'))}")
     base = tab[tab.variant == "base"].set_index("model")
     tab["pct_minus_base"] = tab.pct_100mm - tab.model.map(base.pct_100mm)
 
-    out.log("\nROBUSTNESS: 100 mm deficit (T fixed), mean over districts at their own mean rainfall; 95% delta-method CI "
-            "(year-clustered)")
+    out.log("\nROBUSTNESS: 100 mm deficit (T fixed), mean over districts at their own mean rainfall; 95% interval: "
+            "delta method (year-clustered) unless marked MBB (A14.3)")
     for form in FORMS:
         t = tab[tab.model == form].copy()
-        t["effect"] = [f"{100 * r.pct_100mm:+6.2f}% [{100 * r.pct_lo:+.2f}, {100 * r.pct_hi:+.2f}]" for r in t.itertuples()]
+        t["effect"] = [f"{100 * r.pct_100mm:+6.2f}% [{100 * r.pct_lo:+.2f}, {100 * r.pct_hi:+.2f}]"
+                       + (" MBB" if r.interval_method.startswith("moving") else "") for r in t.itertuples()]
         cols = ["variant", "n", "districts", "years", "b_Rc", "p_Rc", "b_Tc", "p_Tc"] + \
                (["b_Rc_sq", "p_Rc_sq", "b_Tc_sq", "p_Tc_sq"] if form == "M2" else []) + ["trend_coef", "within_r2", "effect"]
         out.log(f"\n[{form}]")
@@ -210,7 +271,8 @@ def main() -> None:
         ax.axvline(0, color=U.INK, lw=1)
         ax.set_yticks(y, names)
         ax.set(title=form, xlabel="Yield change for a 100 mm deficit, T fixed (%)")
-    fig.suptitle("Robustness of the 100 mm effect (dashed = base; 95% delta-method CI, year-clustered)",
+    fig.suptitle("Robustness of the 100 mm effect (dashed = base; 95% CI: delta method, MBB for year_fe, "
+                 "drop_kolhapur_sangli, area_weighted)",
                  fontweight="bold", y=1.0)
     out.log(f"figure -> {U.rel(out.figure(fig, 'forest'))}")
     out.log("Results are associations under the model's assumptions, not causal effects.")

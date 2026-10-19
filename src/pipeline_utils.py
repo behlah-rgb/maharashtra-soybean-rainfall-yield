@@ -237,25 +237,45 @@ def fit_fe(p: pd.DataFrame, outcome: str, rain: dict, trend: str = "common", wei
 
 
 class FastFE:
-    """Array version of the within estimator (district effects + common trend + rain terms) for
-    bootstraps. fit(rows, codes) refits the full model on the rows `rows` of the panel, with entity
-    codes `codes` (so a district drawn twice can be two entities). Same estimates as PanelOLS."""
+    """Array version of the within estimator for bootstraps. fit(rows, codes, tcodes) refits the full model on
+    the given rows. Entity codes `codes` let a district drawn twice be two entities. Options (A14.3):
+      trend="common" (default) or "year_fe" (two-way demeaning by entity and time code; the panel must be
+      balanced, which holds for whole-year draws; tcodes = position of the drawn year);
+      weights=<column> (weighted entity demeaning + WLS, as PanelOLS with weights).
+    Same estimates as PanelOLS (checked in the scripts that use it)."""
 
-    def __init__(self, p: pd.DataFrame, outcome: str, rain: dict):
-        X, _ = design(p, rain, "common")
+    def __init__(self, p: pd.DataFrame, outcome: str, rain: dict, trend: str = "common", weights: str | None = None):
+        assert trend in ("common", "year_fe")
+        assert not (trend == "year_fe" and weights), "year_fe with weights not implemented"
+        X, _ = design(p, rain, "common" if trend == "common" else "none")
+        self.trend = trend
         self.cols = list(X.columns)
         self.X = X.to_numpy(float)
         self.y = p[outcome].to_numpy(float)
+        self.w = p[weights].to_numpy(float) if weights else None
         self.codes = pd.factorize(p.district)[0]
+        self.tcodes = pd.factorize(p.year)[0]
 
-    def fit(self, rows: np.ndarray, codes: np.ndarray | None = None) -> np.ndarray:
+    def fit(self, rows: np.ndarray, codes: np.ndarray | None = None, tcodes: np.ndarray | None = None) -> np.ndarray:
         codes = self.codes[rows] if codes is None else codes
-        X, y = self.X[rows], self.y[rows]
-        cnt = np.bincount(codes)
-        Xm = np.column_stack([np.bincount(codes, X[:, j]) / cnt for j in range(X.shape[1])])
-        Z = X - Xm[codes]
-        yz = y - (np.bincount(codes, y) / cnt)[codes]
-        return np.linalg.lstsq(Z, yz, rcond=None)[0]
+        M = np.column_stack([self.X[rows], self.y[rows]])
+        if self.trend == "year_fe":
+            tcodes = self.tcodes[rows] if tcodes is None else tcodes
+            ne, nt = np.bincount(codes), np.bincount(tcodes)
+            assert len(set(ne)) == 1 and len(set(nt)) == 1 and ne[0] * nt[0] == len(rows), "two-way demeaning needs balance"
+            me = np.column_stack([np.bincount(codes, M[:, j]) / ne for j in range(M.shape[1])])
+            mt = np.column_stack([np.bincount(tcodes, M[:, j]) / nt for j in range(M.shape[1])])
+            Z = M - me[codes] - mt[tcodes] + M.mean(axis=0)
+            return np.linalg.lstsq(Z[:, :-1], Z[:, -1], rcond=None)[0]
+        if self.w is None:
+            cnt = np.bincount(codes)
+            Z = M - np.column_stack([np.bincount(codes, M[:, j]) / cnt for j in range(M.shape[1])])[codes]
+            return np.linalg.lstsq(Z[:, :-1], Z[:, -1], rcond=None)[0]
+        w = self.w[rows]
+        sw = np.bincount(codes, w)
+        Z = M - np.column_stack([np.bincount(codes, w * M[:, j]) / sw for j in range(M.shape[1])])[codes]
+        r = np.sqrt(w)[:, None]
+        return np.linalg.lstsq(r * Z[:, :-1], r[:, 0] * Z[:, -1], rcond=None)[0]
 
 
 def year_rows(p: pd.DataFrame) -> tuple[np.ndarray, list]:
@@ -278,6 +298,11 @@ def block_draws(n_years: int, L: int, B: int, seed: int) -> np.ndarray:
 def rows_from_year_draw(yrows: list, draw: np.ndarray) -> np.ndarray:
     """Rows for one year draw. Districts keep their codes; each drawn year keeps its original trend."""
     return np.concatenate([yrows[k] for k in draw])
+
+
+def time_codes_from_year_draw(yrows: list, draw: np.ndarray) -> np.ndarray:
+    """Time codes (draw position) matching rows_from_year_draw, for year fixed effects."""
+    return np.concatenate([np.full(len(yrows[k]), j) for j, k in enumerate(draw)])
 
 
 def district_draws(n_districts: int, B: int, seed: int) -> np.ndarray:

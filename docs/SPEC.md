@@ -139,3 +139,13 @@ A13.4 **Data quality, written before results.**
 - e. Re-examine the sign of the trend now that 2016-2017 are included, and report it.
 
 A13.5 **To carry into the report.** About 2.6 effective independent rainfall signals (src/05b (d)); the 1-degree temperature grid (several districts share cells; 7 old districts contain no cell centre); IMD rainfall in the Western Ghats zone is less reliable.
+
+## Amendments 2026-10-19 (team lead, A14). Headline models and rules unchanged.
+
+A14.1 **Year fixed effects** are a prominent stability result, not a failed check. Add a variance-share analysis: for district-demeaned R_season and T_season, the share of variance explained by year dummies (the part of within-district variation common across districts in a year). Report M1 and M2 year-FE estimates with moving-block bootstrap intervals (L = 3, 2000 reps).
+A14.2 **dq_flag** stays as applied; document that it flagged Buldhana wet years, not the Ghats districts. Not redefined.
+A14.3 **Robustness intervals.** Moving-block bootstrap (L = 3, 2000 reps, seed BOOT_SEEDS['block_L3']) for: year-FE M1/M2, drop Kolhapur + Sangli M1/M2, area-weighted M1/M2. All other rows keep the delta method. The robustness table gets an "interval_method" column.
+A14.4 **Prototype outputs** stay in outputs/prototype as historical records; README notes that src/06-09 require panel_final.csv.
+A14.5 **Sanity checks** (outputs/final/tables): (a) independent numpy recomputation of the headline 100 mm effect from the stored M2 coefficients vs src/08; (b) turning points for R and T, share of observations on each side, within-district SD of R and T; (c) response curves of ln(yield) vs rainfall for a dry, a median and a wet district, and vs temperature, with a rug of observed values; (d) M1 and M2 yield change for a 100 mm SURPLUS (symmetry check).
+A14.6 **Reproducibility.** run_all.sh runs the pipeline in order from data/raw (flag to skip downloads if the grids exist). Test: delete data/processed and outputs/final, rerun, compare all output tables by checksum with the pre-delete versions; log pass/fail.
+A14.7 **docs/REPORT_INPUTS.md**: tables and figure lists only, one-line captions, no interpretation.

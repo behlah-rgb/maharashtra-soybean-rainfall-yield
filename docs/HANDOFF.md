@@ -23,6 +23,9 @@ Status (updated 2026-10-19, after A13): final models, diagnostics, scenarios and
 | 5c | src/05c_diagnose_ghats.py | outputs/final/tables/05c_{robust_z_panel,cases,imdlib_masking,sentinel_scan}.csv, outputs/final/logs/05c_diagnose_ghats.txt, data/interim/dq_flags.csv |
 | 03/06-09 final | (same scripts) on panel_final.csv | outputs/final/{tables,figures,logs}/ (eda_*, 06_models_*, 07_diag_*, 08_scenario_*, 09_robust_*) |
 | 10 | src/10_results_summary.py | docs/RESULTS_SUMMARY.md |
+| 11 | src/11_sanity_checks.py `<panel> <outdir>` | outputs/final/tables/11_sanity_*.csv, figures/11_sanity_response_curves.png |
+| 12 | src/12_report_inputs.py | docs/REPORT_INPUTS.md (tables + figure list with report subsections) |
+| all | run_all.sh [--skip-download] [--prototype] | runs 01, 02, (05a), 05, 05c, 05b, 03, 06-09, 11, 10, 12; reproducibility test passed 2026-10-19 |
 | - | src/pipeline_utils.py | shared helpers for 06-09 (CLI, outputs/final guard, headers, FE fits, bootstraps) |
 | - | report/report.md | 16-section skeleton; each heading names its feeding script/output |
 
@@ -75,6 +78,8 @@ Reproduce: `source .venv/bin/activate` then `python src/01_clean_icrisat.py`, th
 28. **Name matching.** Six 2011-layer spellings were approved by the user (Bid, Buldana, Garhchiroli, Gondiya, Raigarh, Mumbai); Sindhudurg -> Ratnagiri UNVERIFIED (Konkan only).
 30. **Data-quality diagnosis (05c).** No processing bug: no sentinels/fill/NaN/impossible values in any cell used; imdlib masks exactly the -999 cells. Pune 2005 (19 cell-days > 300 mm; gridded/IMD subdivision 1.27) and Ratnagiri/Raigad 2008 (ratio 0.54) are properties of the IMD product. The pre-registered screen flags only Buldhana 2002/2006/2013 (plausible wet years, ratio ~1.0), not Kolhapur/Sangli.
 31. **Year fixed effects remove most of the level effect** (M2 -3.2% [-7.6, +1.2]; M1 +2.1%), while Rc^2 stays significant. With ~2.6 independent rainfall signals, year effects absorb most common rainfall variation.
+33. **Year-FE variance share (A14.1).** Year dummies explain 56% of the within-district variance of R_season and 88% of T_season; year-FE estimates with MBB L3: M2 -3.2% [-8.4, +0.6], M1 +2.1% [-3.3, +7.7].
+34. **MBB vs delta intervals (A14.3).** With MBB, M1 drop_kolhapur_sangli [-15.9, +0.5] and area_weighted [-15.5, +1.5] include zero (delta method had excluded it); M2 rows still exclude zero.
 32. **Trend** with 2016-17: still negative but smaller and not significant (M2 -0.015/yr, MBB CI spans zero; was -0.024 on 2000-2015).
 29. **Crosswalk source column.** Every row says "via teammate report, not independently verified", as instructed, although Washim -> Akola was verified by the team lead (stated in the note column).
 

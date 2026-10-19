@@ -204,3 +204,10 @@ Format for each entry:
 - Why: CLAUDE.md rule 2 (every number from code); generating the summary from the tables avoids hand-copied numbers.
 - Result: summary written (117 lines). Stopped before report prose, as instructed. Nothing committed.
 - Problems / deviations: the team lead's second "A12" was recorded as A13 to keep SPEC labels unique.
+
+## 2026-10-19 - A14 (team lead): stability, intervals, sanity, reproducibility, report inputs
+- Done: SPEC A14, notes. pipeline_utils.FastFE (year FE, weights). 08: surplus_100mm scenario. 09: variance share; MBB intervals for year_fe, drop_kolhapur_sangli, area_weighted (M1/M2); interval_method column. New src/11_sanity_checks.py, src/12_report_inputs.py, run_all.sh. 10 extended. README notes that 06-09 need panel_final.csv.
+- Why: team-lead decisions A14.1-A14.7. REPORT_INPUTS and RESULTS_SUMMARY are generated from tables so that no number is typed by hand.
+- Result: (A14.1) year dummies explain 56.2% of within-district R_season variance and 88.3% of T_season; year-FE MBB: M2 -3.20% [-8.39, +0.64], M1 +2.09% [-3.32, +7.73]. (A14.3) MBB: drop K+S M2 -11.81% [-18.45, -5.43], M1 -8.51% [-15.91, +0.49]; area-weighted M2 -10.97% [-17.81, -4.14], M1 -8.03% [-15.45, +1.52]. (A14.5a) numpy recomputation of the headline equals 08 (max diff 7e-17) PASS. (A14.5b) turning points R 1240 mm (94.0% of obs below), T 26.93 deg C (76.9% above). (A14.5d) surplus +100 mm: M2 +8.95% [+2.23, +15.57], M1 +6.83%. (A14.6) reproducibility test: deleted data/processed and outputs/final, ran `bash run_all.sh --skip-download` (28 s): all 60 CSV tables, all 21 PNG figures and both generated docs (excluding the timestamp line) byte-identical -> PASS.
+- Numbers changed vs before A14: none of the existing point estimates. Changed tables: 08_scenario_results.csv (102 surplus rows added; role label text), 09_robust_results.csv (6 intervals now MBB; new columns interval_method, delta_lo, delta_hi). All other 49 tables byte-identical after a full rebuild.
+- Problems / deviations: none. Stopped before report prose. Nothing committed.

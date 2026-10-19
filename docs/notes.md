@@ -115,3 +115,14 @@
 - Ratnagiri 2008 (857 mm) and Raigad 2008 (1652 mm): no day over 300 mm, no sentinels; one Ratnagiri cell's season total only 360 mm; gridded Konkan total 1606 vs IMD subdivision 2949 (ratio 0.54). The gridded product under-represents the 2008 Konkan monsoon (likely missing stations in the gridding).
 - The pre-registered screen (|robust z| > 3) flags only Buldhana 2002, 2006, 2013 (robust SD only 94 mm). Their gridded subdivision totals match IMD (ratio 1.0), so these look like genuinely wet years, not data errors. Kolhapur and Sangli are not flagged (largest |z| 2.90 and 1.77). In the wide panel, Nasik 2005 and Satara 2005 are also flagged. The rule was applied as written (A13.4c), with no change after seeing it. Flagged for the team lead.
 - dq_flag is computed in src/05 with the same rule (so the build does not depend on 05c), and 05c asserts equality. panel_final.csv rebuilt: all previous columns identical; dq_flag added (3 rows = 1). Crosswalk source column: Washim row now cites the team lead (A13.1).
+
+## 2026-10-19 - A14 (team lead)
+- dq_flag (A13.4c) kept as applied. Documented: the pre-registered screen flagged Buldhana 2002, 2006 and 2013, plausibly genuine wet years (gridded/IMD subdivision ratio 1.02-1.03, src/05c), and none of the Western Ghats district-years (Kolhapur max |robust z| 2.90, Sangli 1.77). The Ghats concern is handled by the drop_kolhapur_sangli robustness run, not by dq_flag.
+- Year FE is reported as a stability result (A14.1), with a variance-share analysis and MBB intervals.
+
+## 2026-10-19 - A14 implementation notes
+- FastFE extended: two-way demeaning for year FE (valid because whole-year draws keep the panel balanced: every drawn year has all 13 districts) and weighted entity demeaning + WLS for area weights. Checked equal to PanelOLS on the full sample and on a resampled panel, for M1 and M2.
+- Year-FE MBB: time codes = position of the drawn year, so a year drawn twice gets two year effects.
+- 08 role label: only the M2 variant-A 100 mm DEFICIT row is labelled "HEADLINE"; other M2 variant-A scenarios (weak monsoon, surplus) are now "headline model" (previously also "HEADLINE"). No number changed.
+- Symmetry (A14.5d): with a linear term only, the log link makes |surplus| > |deficit| (M1 ratio 1.068); M2's concavity reverses this (ratio 0.891).
+- Turning points (M2): rainfall 1240 mm, above which only 6.0% of district-years lie (only Chandrapur's mean is above it); temperature 26.93 deg C, below which 23.1% lie (11 of 13 district means are above it), i.e. over most of the sample the fitted temperature effect is negative.

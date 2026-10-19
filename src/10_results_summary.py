@@ -130,14 +130,14 @@ def main() -> None:
 
     # Robustness
     rb, f_rb = rd("09_robust_results.csv")
-    L += ["## Robustness (100 mm, T fixed, mean over districts; 95% delta-method CI, year-clustered)", "",
-          "| variant | M1 | M2 |", "|---|---|---|"]
+    L += ["## Robustness (100 mm, T fixed, mean over districts; 95% interval, method per row)", "",
+          "| variant | M1 | M2 | interval method |", "|---|---|---|---|"]
     for vname in dict.fromkeys(rb.variant):
         cells = []
         for m in ["M1", "M2"]:
             r = rb[(rb.variant == vname) & (rb.model == m)].iloc[0]
             cells.append(f"{pc(r.pct_100mm)} [{pc(r.pct_lo)}, {pc(r.pct_hi)}]")
-        L.append(f"| {vname} | {cells[0]} | {cells[1]} |")
+        L.append(f"| {vname} | {cells[0]} | {cells[1]} | {r.interval_method} |")
     for m in ["M1", "M2"]:
         r = rb[(rb.model == m) & (rb.variant != "base")]
         core = r[~r.variant.str.startswith("window") & (r.variant != "year_fe")]
@@ -145,6 +145,9 @@ def main() -> None:
                  f"{pc(r.pct_100mm.max())} ({r.loc[r.pct_100mm.idxmax(), 'variant']}); excluding window and year-FE variants "
                  f"{pc(core.pct_100mm.min())} to {pc(core.pct_100mm.max())}")
     L += [f"Source: [{f_rb}]", ""]
+    vs, f_vs = rd("09_robust_variance_share.csv")
+    L += ["Variance share of district-demeaned weather explained by year dummies (A14.1): " + "; ".join(
+        f"{r.variable} {r.share_explained_by_year_dummies:.3f}" for r in vs.itertuples()) + f" [{f_vs}]", ""]
     wdec, f_w = rd("09_robust_weighting_decomposition.csv")
     L += ["Area weighting (M1): " + "; ".join(f"{r.weights} {pc(r.pct_100mm)}" for r in wdec.itertuples()) + f" [{f_w}]", ""]
 
@@ -162,6 +165,21 @@ def main() -> None:
     L += [f"- Max VIF (M2, within): {vif.VIF.max():.2f}; within corr(Rc, Tc) "
           f"{co[co.term == 'within corr(Rc, Tc)'].VIF.iat[0]:.3f} [{f_co}]", ""]
 
+    # Sanity checks (A14.5)
+    hc, f_hc = rd("11_sanity_headline_recompute.csv")
+    sy, f_sy = rd("11_sanity_symmetry.csv")
+    tp, f_tp = rd("11_sanity_turning_points.csv")
+    L += ["## Sanity checks (A14.5)", "",
+          f"- Independent numpy recomputation vs src/08: max |diff| {hc.abs_diff_pct.max():.1e} (pct), "
+          f"{hc.abs_diff_kgha.max():.1e} (kg/ha) -> {'PASS' if hc.abs_diff_pct.max() < 1e-9 else 'FAIL'} [{f_hc}]"]
+    for r in sy.itertuples():
+        L.append(f"- Symmetry {r.model}: deficit {pc(r.deficit_100mm)}, surplus {pc(r.surplus_100mm)}, "
+                 f"|surplus|/|deficit| {r.ratio_abs_surplus_to_abs_deficit:.3f} [{f_sy}]")
+    for r in tp.itertuples():
+        L.append(f"- Turning point {r.variable}: {r.turning_point:.2f} ({r.shape}); share of observations below "
+                 f"{r.share_obs_below:.3f}, above {r.share_obs_above:.3f}; within-district SD {r.within_district_sd_pooled:.3f} [{f_tp}]")
+    L += [""]
+
     # Anomalies
     cs, f_cs = rd("05c_cases.csv")
     nb, f_nb = rd("validation_b_normals_comparison.csv", C.OUT_TABLES)
@@ -176,8 +194,11 @@ def main() -> None:
     L.append("- Gridded vs IMD subdivision (2000-2015): " + "; ".join(
         f"{r.subdivision} r = {r.corr:.3f}, ratio {r.mean_ratio_grid_over_imd:.3f}" for r in va.itertuples()) + f" [{f_va}]")
     yfe = rb[rb.variant == "year_fe"].set_index("model")
-    L += [f"- Year fixed effects (exploratory) shrink the effect: M1 {pc(yfe.loc['M1', 'pct_100mm'])}, M2 "
-          f"{pc(yfe.loc['M2', 'pct_100mm'])} [{f_rb}]",
+    L += [f"- Year fixed effects (stability result, A14.1) shrink the effect: M1 {pc(yfe.loc['M1', 'pct_100mm'])} "
+          f"[{pc(yfe.loc['M1', 'pct_lo'])}, {pc(yfe.loc['M1', 'pct_hi'])}], M2 {pc(yfe.loc['M2', 'pct_100mm'])} "
+          f"[{pc(yfe.loc['M2', 'pct_lo'])}, {pc(yfe.loc['M2', 'pct_hi'])}] (MBB L3) [{f_rb}]",
+          "- dq_flag (A13.4c, kept as applied, A14.2) flagged Buldhana wet years, not the Western Ghats districts; the Ghats "
+          "are covered by the drop_kolhapur_sangli run.",
           "- Temperature: 1-degree IMD grid; several districts share cells; 7 old districts contain no cell centre "
           "(data/interim/grid_cell_weights.csv).",
           "- Old-district boundaries: Partur taluka (Jalna, from Parbhani) kept in Aurangabad (limitation, A11.3).", ""]

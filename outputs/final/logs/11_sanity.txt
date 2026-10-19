@@ -1,0 +1,36 @@
+============================================================================================
+FINAL: district-level gridded panel (panel_final.csv).
+============================================================================================
+Input panel: data/processed/panel_final.csv   Output folder: outputs/final
+(a) Independent numpy recomputation vs src/08 (state mean, T fixed):
+model      scenario  pct_numpy  pct_src08  abs_diff_pct  kgha_numpy  kgha_src08  abs_diff_kgha  ci_lo_src08  ci_hi_src08
+   M1 deficit_100mm -0.0639204 -0.0639204   4.16334e-17    -74.0321    -74.0321    5.68434e-14    -0.119785    0.0132059
+   M1 surplus_100mm  0.0682853  0.0682853   1.38778e-17     79.0874     79.0874     9.9476e-14   -0.0130337     0.136086
+   M2 deficit_100mm  -0.100429  -0.100429   5.55112e-17    -117.199    -117.199     9.9476e-14    -0.151782   -0.0428878
+   M2 surplus_100mm  0.0894989  0.0894989   6.93889e-17     105.142     105.142    4.26326e-14    0.0223374     0.155714
+    -> PASS: max |diff| pct 6.94e-17, kg/ha 9.95e-14
+
+(d) Symmetry (a symmetric response would give sum 0 and ratio 1; the log link alone makes the surplus slightly LARGER in absolute value than the deficit for a linear model, since exp(b) - 1 > |exp(-b) - 1|):
+model  deficit_100mm  surplus_100mm  sum_surplus_plus_deficit  ratio_abs_surplus_to_abs_deficit
+   M1       -0.06392       +0.06829                  +0.00436                          +1.06829
+   M2       -0.10043       +0.08950                  -0.01093                          +0.89117
+
+(b) Turning points (M2), observations on each side, within-district SD:
+variable                      R_season (mm)                                                                                    T_season (deg C)
+turning_point                   1239.958199                                                                                           26.925902
+shape                               maximum                                                                                             maximum
+share_obs_below                    0.940171                                                                                            0.230769
+share_obs_above                    0.059829                                                                                            0.769231
+within_district_sd_pooled        188.249189                                                                                              0.4705
+mean_of_district_sds             188.640926                                                                                            0.479847
+observed_min                      198.42745                                                                                           25.061597
+observed_max                    1855.472503                                                                                            29.27013
+districts_with_mean_above_tp     Chandrapur  Akola, Amarawati, Beed, Buldhana, Chandrapur, Nagpur, Nanded, Osmanabad, Parbhani, Wardha, Yeotmal
+
+(c) Response-curve districts: {'dry': 'Sangli', 'median': 'Nanded', 'wet': 'Chandrapur'}
+figure -> outputs/final/figures/11_sanity_response_curves.png
+table -> outputs/final/tables/11_sanity_headline_recompute.csv
+table -> outputs/final/tables/11_sanity_symmetry.csv
+table -> outputs/final/tables/11_sanity_turning_points.csv
+table -> outputs/final/tables/11_sanity_response_curves.csv
+FINAL: district-level gridded panel (panel_final.csv).

@@ -1,0 +1,4 @@
+# FINAL: district-level gridded panel (panel_final.csv).
+variable,within_district_var,share_explained_by_year_dummies,residual_share
+R_season,35286.31364298518,0.5615557295842577,0.4384442704157422
+T_season,0.22042407764566843,0.8832335450202498,0.11676645497975033
