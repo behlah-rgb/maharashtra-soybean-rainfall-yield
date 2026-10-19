@@ -1,6 +1,6 @@
 # Handoff (2026-10-18)
 
-Status (updated 2026-10-19, after amendments A7-A10): the prototype pipeline on subdivision rainfall is complete (steps 0-4). src/03 and src/06-09 take a panel path and output folder, and have been run on the prototype panel only (outputs/prototype/). The gridded build (step 5) is still a skeleton waiting for data, except the crosswalk guard (implemented and tested). Nothing has been run on gridded data and outputs/final/ does not exist. report/report.md follows the professor's structure (A8) and holds no results. Everything from panel_v1 is labelled **PROTOTYPE - NOT FOR THE REPORT**.
+Status (updated 2026-10-19, after A11-A12): the teammate did not deliver data, so we acquired it ourselves. IMD gridded rainfall (0.25 deg) and Tmax/Tmin (1.0 deg) for 2000-2017 were downloaded via imdlib, and the 2011 Census district layer from DataMeet (src/05a). The final panel data/processed/panel_final.csv (13 x 18 = 234 rows, district-level rainfall, dry spells and temperature) and panel_final_wide.csv (17 x 18) are built (src/05) and validated (src/05b). No model has been run on panel_final; outputs/final/ does not exist. report/report.md holds no results. Everything from panel_v1 is labelled **PROTOTYPE - NOT FOR THE REPORT**.
 
 ## (a) What is done and which files exist
 
@@ -17,6 +17,9 @@ Status (updated 2026-10-19, after amendments A7-A10): the prototype pipeline on 
 | 7 | src/07_diagnostics.py `<panel> <outdir>` | tables/07_diag_tests.csv, 07_diag_influence.csv, 07_diag_leave_one_district_out.csv; 5 figures 07_diag_*.png; logs/07_diag.txt |
 | 8 | src/08_scenario_100mm.py `<panel> <outdir>` | tables/08_scenario_results.csv, 08_scenario_range_curve.csv, 08_scenario_district_means.csv; figures 08_scenario_range_curve.png, 08_scenario_district_effects.png; logs/08_scenario.txt |
 | 9 | src/09_robustness.py `<panel> <outdir> --wide-panel <wide>` | tables/09_robust_results.csv, 09_robust_skipped.csv, 09_robust_weight_shares.csv, 09_robust_weighting_decomposition.csv, 09_robust_district_slopes.csv, 09_robust_weighted_leave_one_district_out.csv; figures 09_robust_forest.png, 09_robust_area_weighting.png; logs/09_robust.txt |
+| 5a | src/05a_download_weather.py | data/raw/grids/imd/archive/{rain,tmax,tmin}/<year>.grd + manifest.json (507 MB, gitignored); data/raw/boundaries/datameet_census2011/2011_Dist.*; docs/data_sources.md |
+| 5 | src/05_build_panel_gridded.py | data/interim/old_to_current_districts.csv, old_districts.gpkg, grid_cell_weights.csv, old_district_weather.csv; data/processed/panel_final.csv, panel_final_wide.csv |
+| 5b | src/05b_validate_panel.py | outputs/tables/validation_*.csv (11), outputs/figures/validation_*.png (6), outputs/logs/05b_validation.txt |
 | - | src/pipeline_utils.py | shared helpers for 06-09 (CLI, outputs/final guard, headers, FE fits, bootstraps) |
 | - | report/report.md | 16-section skeleton; each heading names its feeding script/output |
 
@@ -62,29 +65,28 @@ Reproduce: `source .venv/bin/activate` then `python src/01_clean_icrisat.py`, th
 21. **Area weighting (A9).** Two channels, both matter: cross-district (district mean area) and over-time (area grows, so later years get 62.8% of the weight). Kolhapur and Sangli, the only districts with non-negative district-specific slopes, get 5% of the weight. Kish effective N = 11.0 of 13. No single district drives the shift.
 22. **Crosswalk statuses (A10).** CONFIRMED_OFFICIAL_PAGE pairs rest on the teammate's citation of official pages, not independently verified. CAVEAT: Washim -> Akola (taluka-level confirmation needed); Partur taluka of Jalna came from Parbhani, so a whole-district dissolve of Jalna into Aurangabad leaves Partur out of old Parbhani. UNVERIFIED: Mumbai City/Suburban -> Bombay, and three 2023-24 renames I added (Dharashiv, Chhatrapati Sambhajinagar, Ahilyanagar). The guard blocks only if an UNVERIFIED pair is used.
 23. **Negative trend (A6, A9).** Must be re-examined once 2016-2017 are in panel_final.
+24. **Kolhapur fails the normals check (05b).** Gridded mean 1102 mm vs normal 1738 mm (ratio 0.63; the only panel district beyond 25%). Pune (1.32) and Ahmednagar (1.26) are flagged too but are not in the panel. The normals' period is not stated in the file.
+25. **Western Ghats artefacts in the 0.25 deg rainfall.** Ratnagiri 2008 = 857 mm, Raigad 2008 = 1651 mm (vs ~3500; IMD subdivision series normal that year); Pune 2005 = 4223 mm, Satara 2005 = 2124 mm; Pune/Satara/Sangli low in 2000-2003. Kolhapur and Sangli (panel) are in this zone; Madhya Maharashtra gridded vs IMD r = 0.88 (Vidarbha 0.97, Marathwada 0.96).
+26. **Independent rainfall signals.** The gridded panel has district-level rainfall, but districts remain correlated (mean r = 0.54); participation ratio 2.56, 5 components for 90% of variance. More than the prototype's 3 identical series, but far fewer than 13.
+27. **Temperature grid is coarse.** 2-8 overlapping 1-deg cells per old district; 7 old districts contain no cell centre (incl. Kolhapur, Sangli, Wardha, Amarawati). T_season varies little (SD 0.90 deg C) and correlates with rainfall within districts (r = -0.49), though VIF stays <= 1.5.
+28. **Name matching.** Six 2011-layer spellings were approved by the user (Bid, Buldana, Garhchiroli, Gondiya, Raigarh, Mumbai); Sindhudurg -> Ratnagiri UNVERIFIED (Konkan only).
+29. **Crosswalk source column.** Every row says "via teammate report, not independently verified", as instructed, although Washim -> Akola was verified by the team lead (stated in the note column).
 
-## (c) What I still need from my teammate
+## (c) Data still needed
+The teammate's data is no longer needed: weather and boundaries were acquired by us (A12). Optional: district irrigation share 2000-2017 (an extra control or heterogeneity split; not in any script yet). Still open: taluka-level confirmation for Partur and Washim (limitations, not blocking).
 
-| Item | Needed detail | Feeds (src/05) |
-|---|---|---|
-| IMD 0.25 degree gridded daily rainfall, 2000-2017 | Raw files (.grd or NetCDF) for every year 2000-2017, plus the format/version note | `read_imd_rain_grid` -> `district_average` -> `seasonal_windows(how="sum")` -> R_season, R_early, R_late |
-| ERA5-Land monthly 2m temperature (and total precipitation), 2000-2017 | NetCDF covering Maharashtra (about 15.5-22.1N, 72.6-80.9E), product type stated ("monthly averaged reanalysis") | `read_era5_land_monthly` -> `district_average` -> `seasonal_windows(how="mean")` -> T_season, T_early, T_late |
-| District boundary file | Current Maharashtra district polygons (shapefile/GeoJSON/GPKG) with CRS and source | `dissolve_to_icrisat_districts` (input polygons) |
-| Old-to-new district notes | For every current district, its parent ICRISAT district, and any district whose split crossed old lines (e.g. Jalna from Aurangabad + Parbhani?). Needed also for the 4 wider-set districts (Aurangabad, Ahmednagar, Nasik, Satara). Statuses per config.DISTRICT_CROSSWALK (A10). Still needed: taluka-level confirmation for Washim -> Akola; whether the boundary file uses the renamed districts (Dharashiv, Chhatrapati Sambhajinagar, Ahilyanagar); Mumbai City/Suburban -> Bombay. | `dissolve_to_icrisat_districts` (old_new_map CSV, status column) |
-| Irrigation data (optional) | District-year share of soybean (or kharif) area irrigated, 2000-2017 | Not in src/05 yet; would be an extra control or a heterogeneity split in the final models |
-
-## (d) First three things to do when the data arrives
-
-1. **Check units and coverage before building anything.** Read the ERA5-Land `units` attributes (Kelvin; tp as m/day mean daily rate -> x 1000 x days in month), confirm IMD grid dimensions and missing-value codes, and confirm 2000-2017 is fully covered. Log everything in notes.md.
-2. **Build and check the old-boundary polygons.** Run check_crosswalk() (src/05) on the boundary file's district names, log every CAVEAT row used, then dissolve, assert every selected ICRISAT district has a polygon, and plot them over the grid to count cells per district.
-3. **Validate the gridded rainfall against the prototype.** For 2000-2015, average the district R_season within each subdivision and correlate it with the IMD subdivision series in panel_v1.csv. A strong correlation and similar levels mean the pipeline is right. Only then write panel_final.csv and panel_final_wide.csv, and run:
+## (d) Next steps (after the user's go-ahead; models not started)
+1. Decide how to treat items 24-25 (Kolhapur and the Western Ghats artefacts) BEFORE seeing model results.
+2. Run on the final panel only:
    ```
-   python src/06_models_final.py data/processed/panel_final.csv outputs/final
-   python src/07_diagnostics.py  data/processed/panel_final.csv outputs/final
+   python src/03_eda.py           data/processed/panel_final.csv outputs/final
+   python src/06_models_final.py  data/processed/panel_final.csv outputs/final
+   python src/07_diagnostics.py   data/processed/panel_final.csv outputs/final
    python src/08_scenario_100mm.py data/processed/panel_final.csv outputs/final
-   python src/09_robustness.py   data/processed/panel_final.csv outputs/final --wide-panel data/processed/panel_final_wide.csv
+   python src/09_robustness.py    data/processed/panel_final.csv outputs/final --wide-panel data/processed/panel_final_wide.csv
    ```
-   Also `python src/03_eda.py data/processed/panel_final.csv outputs/final`. With district-level rainfall, 09 will also run the year-FE variant (it is skipped on panel_v1). Then re-examine the trend with 2016-2017 included (A6, A9).
+   06 applies the pre-specified headline rule (A11.1). With district-level rainfall, 09 will run the year-FE variant.
+3. Re-examine the trend with 2016-2017 included (A6, A9). Decide whether T_season and dry_spell_max enter the models; the current specification (SPEC) is rainfall-only, so adding them is a SPEC change.
 
 ## Decisions
 Resolved 2026-10-18 by the team lead (SPEC Amendments A1-A6): district window 2000-2017; small-area rows kept + robustness; proportional timing split; packages installed; fixed 13 districts + wider set; trend specification locked.
@@ -92,6 +94,6 @@ Resolved 2026-10-18 by the team lead (SPEC Amendments A1-A6): district window 20
 Resolved 2026-10-19 (A7-A10): inference methods and verdict rule; report structure; kg/ha baseline and smearing; crosswalk statuses; Pesaran kept; src/03 converted.
 
 Still waiting:
-- Verdict rule scope: I included district CR, wild bootstrap, year CR, two-way CR, Driscoll-Kraay and MBB L = 3, with MBB L = 2/4 as sensitivity only. Confirm.
-- The rename rows I added to the crosswalk (UNVERIFIED) need the team lead's or teammate's confirmation.
-- The old outputs/tables/eda_* and outputs/figures/eda_* copies (pre-CLI) are duplicates of outputs/prototype; delete or keep?
+- Kolhapur / Western Ghats rainfall artefacts (items 24-25): keep as is, add a robustness run without Kolhapur (and Sangli), or something else. Decide before models.
+- Whether T_season and dry_spell_max enter the final models (SPEC change).
+- Washim parent area: the teammate's report and the team lead's sources disagree (notes.md 2026-10-19).

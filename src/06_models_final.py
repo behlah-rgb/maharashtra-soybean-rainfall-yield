@@ -13,6 +13,8 @@ side by side with district-clustered (+ wild cluster bootstrap), year-clustered,
 Driscoll-Kraay SEs (Bartlett, maxlags DK_MAXLAGS; unreliable with few years).
 Linear vs quadratic verdict: the squared-term test must agree at ALPHA across district CR, wild cluster
 bootstrap, year CR, two-way CR, Driscoll-Kraay and MBB L = BLOCK_LENGTH; otherwise INCONCLUSIVE.
+Headline model (SPEC A11.1, pre-specified): INCONCLUSIVE or LINEAR ADEQUATE -> linear (quadratic as
+sensitivity, report the range across both if INCONCLUSIVE); QUADRATIC SUPPORTED -> quadratic.
 
 Also: within R2, AIC/BIC (formula in pipeline_utils.gaussian_ic), classical F, leave-one-year-out
 (LOYO) prediction error; log models converted to kg/ha with and without Duan smearing (SPEC A9).
@@ -163,7 +165,15 @@ def main() -> None:
             out.log("  p by method: " + ", ".join(f"{m} {v:.4f}{'*' if sig[m] else ''}" for m, v in vp.items())
                     + "   (* = significant)")
             out.log("  sensitivity (not in verdict): " + ", ".join(f"{m} {v:.4f}" for m, v in sens.items()))
-            verdict_rows.append({"model": name, "term": sq[0], "verdict": verdict, **{f"p_{m}": v for m, v in vp.items()},
+            # Pre-specified headline rule (SPEC A11.1), fixed before any gridded result.
+            lin = name.replace("quadratic", "linear")
+            headline = name if verdict.startswith("QUADRATIC") else lin
+            sensitivity = lin if headline == name else name
+            out.log(f"  HEADLINE (SPEC A11.1): {headline}; sensitivity: {sensitivity}"
+                    + ("; report the range across both" if verdict.startswith("INCONCLUSIVE") else ""))
+            verdict_rows.append({"model": name, "term": sq[0], "verdict": verdict, "headline_model": headline,
+                                 "sensitivity_model": sensitivity,
+                                 "report_range_across_both": verdict.startswith("INCONCLUSIVE"), **{f"p_{m}": v for m, v in vp.items()},
                                  **{f"p_{m}_sensitivity": v for m, v in sens.items()}, "p_classical_F": p_classic,
                                  "aic_linear": None, "aic_quadratic": ic["aic"]})
             v = list(s["rain"])[0]
@@ -211,7 +221,7 @@ def main() -> None:
     out.log("\nLINEAR vs QUADRATIC VERDICTS")
     vd = pd.DataFrame(verdict_rows)
     for r in vd.itertuples():
-        out.log(f"  {r.model}: {r.verdict}")
+        out.log(f"  {r.model}: {r.verdict} -> headline {r.headline_model} (SPEC A11.1)")
     ly = pd.concat(loyo_rows)
     out.log("\nLOYO RMSE by held-out year (kg/ha, ln models smeared):")
     ly["rmse_kgha_year"] = np.where(ly.sse_ln.notna(), ly.rmse_kgha_smeared_year, ly.rmse_kgha_naive_year)

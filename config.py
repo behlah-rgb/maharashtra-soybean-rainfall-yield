@@ -122,10 +122,10 @@ ALPHA = 0.05
 # A10 robustness: selected districts whose old boundaries include a later split.
 BOUNDARY_SENSITIVE_DISTRICTS = ["Akola", "Parbhani", "Osmanabad", "Chandrapur"]
 
-# A10 old-to-new district crosswalk: (current district, ICRISAT district, status, note).
-# Statuses: CONFIRMED_OFFICIAL_PAGE, CAVEAT, UNVERIFIED. A current district whose name equals an
-# ICRISAT district maps to itself and needs no row. src/05 refuses to write panel_final.csv if any
-# row it uses is UNVERIFIED.
+# A10/A11 old-to-new district crosswalk: (current district, ICRISAT district, status, note).
+# Statuses: CONFIRMED_OFFICIAL_PAGE, CAVEAT, ALIAS_NAME_ONLY (rename, same boundary; A11), UNVERIFIED.
+# A current district whose name equals an ICRISAT district maps to itself and needs no row. src/05
+# refuses to write panel_final.csv only if a row it uses is UNVERIFIED (ALIAS_NAME_ONLY never blocks).
 _SRC = ("Maharashtra government district-history page cited in the teammate's report; "
         "not independently verified")
 DISTRICT_CROSSWALK = [
@@ -135,13 +135,61 @@ DISTRICT_CROSSWALK = [
     ("Hingoli", "Parbhani", "CONFIRMED_OFFICIAL_PAGE", _SRC),
     ("Gondia", "Bhandara", "CONFIRMED_OFFICIAL_PAGE", _SRC),
     ("Jalna", "Aurangabad", "CONFIRMED_OFFICIAL_PAGE",
-     _SRC + ". CAVEAT: Jalna also took Partur taluka from Parbhani; a whole-district dissolve assigns it to Aurangabad"),
+     _SRC + ". CAVEAT kept (A11): Jalna also took Partur taluka from Parbhani; Jalna is kept wholly in "
+     "Aurangabad, so old Parbhani loses Partur (limitation, no taluka-level handling)"),
     ("Palghar", "Thane", "CONFIRMED_OFFICIAL_PAGE", _SRC),
-    ("Washim", "Akola", "CAVEAT", "parent area needs taluka-level confirmation"),
-    # Not covered by the team lead's list: UNVERIFIED until confirmed.
+    ("Washim", "Akola", "CONFIRMED_OFFICIAL_PAGE",
+     "verified by the team lead (2026-10-19) from two official sources: Central Ground Water Board Washim "
+     "district document; Akola district website history page (Washim carved from Akola on 1 July 1998)"),
+    # A11: renames, same boundaries.
+    ("Dharashiv", "Osmanabad", "ALIAS_NAME_ONLY", "rename of Osmanabad; same boundary (A11)"),
+    ("Chhatrapati Sambhajinagar", "Aurangabad", "ALIAS_NAME_ONLY", "rename of Aurangabad; same boundary (A11)"),
+    ("Ahilyanagar", "Ahmednagar", "ALIAS_NAME_ONLY", "rename of Ahmednagar; same boundary (A11)"),
+    # Not covered by the team lead: UNVERIFIED until confirmed (not used by the 13- or 17-district panels).
     ("Mumbai Suburban", "Bombay", "UNVERIFIED", "candidate pair"),
     ("Mumbai City", "Bombay", "UNVERIFIED", "candidate pair"),
-    ("Dharashiv", "Osmanabad", "UNVERIFIED", "rename (2023), my addition; confirm against the boundary file"),
-    ("Chhatrapati Sambhajinagar", "Aurangabad", "UNVERIFIED", "rename (2023), my addition; confirm"),
-    ("Ahilyanagar", "Ahmednagar", "UNVERIFIED", "rename (2024), my addition; confirm"),
+    ("Sindhudurg", "Ratnagiri", "UNVERIFIED",
+     "carved from Ratnagiri in 1981; not on the team lead's list; mapping approved by the user 2026-10-19 "
+     "as UNVERIFIED; Konkan only, used in no panel"),
 ]
+
+# ---- A12 (2026-10-19): weather data acquired via imdlib; DataMeet 2011 boundaries ----------
+IMD_CACHE_DIR = GRIDS_DIR / "imd"            # imdlib cache layout: archive/<var>/<year>.grd
+IMD_VARS = ["rain", "tmax", "tmin"]
+WEATHER_YEAR_START, WEATHER_YEAR_END = 2000, 2017
+DOWNLOAD_MAX_ATTEMPTS = 2                    # imdlib.load calls per variable (each retries internally)
+
+BOUNDARY_DIR = DATA_RAW / "boundaries" / "datameet_census2011"
+DATAMEET_REPO = "datameet/maps"
+DATAMEET_COMMIT = "b3fbbde595310b397a55d718e0958ce249a4fa1f"   # master HEAD on 2026-10-19
+DATAMEET_LAYER = "Districts/Census_2011/2011_Dist"
+DATAMEET_EXTS = [".shp", ".shx", ".dbf", ".prj"]
+DATAMEET_LICENCE = ("CC BY 2.5 India (Districts/README.md); repository data default CC BY 4.0; code MIT. "
+                    "Attribution: DataMeet India community")
+STATE_NAME_BOUNDARY = "Maharashtra"
+EXPECTED_N_CURRENT_DISTRICTS = 35            # 2011 Census, matches district_wise_rainfall_normal.csv
+EQUAL_AREA_CRS = "ESRI:102028"               # Asia South Albers Equal Area Conic
+
+DATA_SOURCES_DOC = ROOT / "docs" / "data_sources.md"
+OLD_TO_CURRENT_FILE = DATA_INTERIM / "old_to_current_districts.csv"
+OLD_DISTRICTS_GPKG = DATA_INTERIM / "old_districts.gpkg"
+OLD_DISTRICT_WEATHER_FILE = DATA_INTERIM / "old_district_weather.csv"
+CELL_WEIGHTS_FILE = DATA_INTERIM / "grid_cell_weights.csv"
+CROSSWALK_SOURCE_NOTE = ("source: Maharashtra government district-history pages via teammate report, "
+                         "not independently verified")
+
+# Approved spelling variants, A12.3: boundary-layer or normals-file spelling -> canonical name, which is
+# either an ICRISAT district (identity) or the current-district name used in DISTRICT_CROSSWALK.
+# First four: team lead (A12). Next six: approved by the user on 2026-10-19 after the DataMeet layer was
+# inspected (Census 2011 spellings, codes 523, 500, 520, 508, 507, 519). "Mumbai Sub": normals-file
+# abbreviation (my addition, flagged; affects only Bombay, which is in no panel).
+SPELLING_VARIANTS = {"Amravati": "Amarawati", "Yavatmal": "Yeotmal", "Nashik": "Nasik",
+                     "Ahmadnagar": "Ahmednagar",
+                     "Bid": "Beed", "Buldana": "Buldhana", "Raigarh": "Raigad",
+                     "Garhchiroli": "Gadchiroli", "Gondiya": "Gondia", "Mumbai": "Mumbai City",
+                     "Mumbai Sub": "Mumbai Suburban"}
+
+SEASON_START_MMDD, SEASON_END_MMDD = "06-01", "09-30"
+EARLY_END_MMDD = "07-31"                     # R_early = Jun-Jul; R_late = Aug-Sep; R_julsep = Jul-Sep
+DRY_DAY_MM = 2.5
+VALIDATION_NORMAL_TOL = 0.25                 # flag old districts off the normals by more than 25%

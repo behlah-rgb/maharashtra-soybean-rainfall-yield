@@ -132,3 +132,33 @@ Format for each entry:
 - Why: A8 and the team lead's request; the identical-output check shows the conversion did not change any result.
 - Result: done. Nothing run on gridded data; nothing committed.
 - Problems / deviations: none.
+
+## 2026-10-19 - A11 recorded and applied
+- Done: SPEC A11.1-A11.5; config.DISTRICT_CROSSWALK updated (Washim CONFIRMED, renames ALIAS_NAME_ONLY); src/05 accepts the ALIAS_NAME_ONLY status; 10 old EDA copies deleted; crosswalk compared with the teammate's Table 4.
+- Why: team-lead decisions. The headline rule is fixed before gridded results so it cannot be chosen after seeing them. The docx was read with the standard library (zipfile + XML) to avoid installing pandoc or python-docx.
+- Result: 1 discrepancy (Washim: the report says the parent needs tehsil-level confirmation and mentions a historical Akola/Yavatmal split; set CONFIRMED as instructed and flagged). Other pairs consistent.
+- Problems / deviations: none.
+
+## 2026-10-19 - A12.1: imdlib installed
+- Done: pip install imdlib (0.3.1) into .venv; imports tested; pinned imdlib and its new dependencies (requests, urllib3, idna, charset-normalizer, pytz) in requirements.txt (17 pins).
+- Why: team-lead decision A12.1. The new dependencies are pinned too, so the environment is reproducible.
+- Result: OK.
+- Problems / deviations: none.
+
+## 2026-10-19 - A12.2/3: src/05a_download_weather.py
+- Done: downloaded the DataMeet 2011 district layer (pinned commit) and IMD rain (0.25 deg), tmax and tmin (1.0 deg) for 2000-2017 via imdlib.load into data/raw/grids/imd/; wrote docs/data_sources.md (URL, POST data, UTC retrieval time, units, grid, size, sha256 per file).
+- Why: imdlib.load is the current documented API (README quick start) and checks exact file sizes. Files went into new dedicated folders. The coverage check reads one year only (the full rain array would be about 0.9 GB).
+- Result: 54/54 IMD files on the first attempt; grids cover Maharashtra (rain 930 valid cells in the state box, temperature 76). Boundary layer: 641 districts, 35 in Maharashtra.
+- Problems / deviations: none. NASA POWER fallback not needed.
+
+## 2026-10-19 - A12.3-5: src/05_build_panel_gridded.py (skeleton replaced)
+- Done: name matching (stopped on 6 unmatched names; resumed after user approval), crosswalk CSV, dissolve to 26 old districts (gpkg, areas printed), guard, fractional-overlap weights, daily district means, seasonal variables, panel_final.csv and panel_final_wide.csv.
+- Why: fractional overlap is used for both grids because 7 old districts contain no 1-deg cell centre; overlap weighting uses every touching cell by its share. Weather was computed for all 26 old districts so the subdivision validation can be rebuilt from full subdivisions.
+- Result: panel_final 234 rows (13 x 18), panel_final_wide 306 (17 x 18); no missing values, unique keys; no missing cells and no fallbacks. R_season 198-1855 mm, T_season 25.1-29.3 deg C, dry_spell_max 5-36 days. Independent raw-byte recomputation agrees (see notes).
+- Problems / deviations: the user approved 6 spelling variants and Sindhudurg -> Ratnagiri (UNVERIFIED) mid-run.
+
+## 2026-10-19 - A12.6: src/05b_validate_panel.py
+- Done: validation (a)-(e); tables outputs/tables/validation_*.csv, figures outputs/figures/validation_*.png, log outputs/logs/05b_validation.txt.
+- Why: to check the gridded panel against independent sources before any model (SPEC A12.6).
+- Result: (a) gridded vs IMD subdivision R_season, 2000-2015: Vidarbha r = 0.972, ratio 1.029; Marathwada 0.964, 1.020; Madhya Maharashtra 0.884, 0.925; Konkan & Goa 0.759, 0.952 (IMD includes Goa). (b) Flagged > 25% off the normals: Kolhapur 0.634 (panel), Pune 1.320, Ahmednagar 1.264 (not in panel); the other panel districts are within 0.86-1.08. (c) T_season 25.1-29.3 deg C, warmest Yeotmal/Chandrapur/Wardha (28.2-28.3), coolest Sangli/Kolhapur (25.7-26.0); Tmax > Tmin everywhere; no missing cells. (d) corr(R_season, T_season) pooled 0.062, within district -0.485; VIF <= 1.50 (within); mean cross-district rainfall correlation 0.54; participation ratio 2.56 effective signals, 5 components for 90% of variance, first component 59%. (e) 2016 mean yield 1278 kg/ha and 2017 1118 kg/ha, recovering from 606 (2014) and 592 (2015).
+- Problems / deviations: Kolhapur fails the normals check; Western Ghats anomalies in the gridded rainfall (Ratnagiri/Raigad 2008, Pune/Satara 2005). Reported, not changed. Stopped before any model, as instructed; src/06-09 not run on panel_final.

@@ -1,0 +1,159 @@
+============================================================================================
+VALIDATION of data/processed/panel_final.csv (IMD gridded data, DataMeet 2011 boundaries). Descriptive; no model.
+============================================================================================
+Panel: 234 rows, 13 districts, 2000-2017; weather file: 26 old districts
+
+(a) Gridded R_season vs IMD subdivision totals, 2000-2015
+       subdivision  n_years  corr  mean_grid_mm  mean_imd_mm  mean_ratio_grid_over_imd                                            note
+      KONKAN & GOA       16 0.759      2750.426     2887.712                     0.952 IMD subdivision includes Goa (not in the layer)
+MADHYA MAHARASHTRA       16 0.884       741.368      801.438                     0.925                                                
+        MATATHWADA       16 0.964       634.466      622.106                     1.020                                                
+          VIDARBHA       16 0.972       989.128      960.888                     1.029                                                
+table -> outputs/tables/validation_a_subdivision_comparison.csv
+Panel districts vs their IMD subdivision series:
+  district        subdivision  corr_with_subdivision  mean_ratio_district_over_subdivision
+     Akola           VIDARBHA                  0.858                                 0.790
+ Amarawati           VIDARBHA                  0.732                                 0.864
+      Beed         MATATHWADA                  0.893                                 0.927
+  Buldhana           VIDARBHA                  0.688                                 0.729
+Chandrapur           VIDARBHA                  0.923                                 1.301
+  Kolhapur MADHYA MAHARASHTRA                  0.742                                 1.365
+    Nagpur           VIDARBHA                  0.874                                 1.049
+    Nanded         MATATHWADA                  0.825                                 1.219
+ Osmanabad         MATATHWADA                  0.846                                 0.956
+  Parbhani         MATATHWADA                  0.897                                 1.145
+    Sangli MADHYA MAHARASHTRA                  0.666                                 0.533
+    Wardha           VIDARBHA                  0.875                                 0.938
+   Yeotmal           VIDARBHA                  0.935                                 0.930
+table -> outputs/tables/validation_a_district_vs_subdivision.csv
+figure -> outputs/figures/validation_a_subdivision_series.png
+
+(b) Old-district mean R_season 2000-2017 vs district normals
+  district  normal_jun_sep_mm                       members  grid_mean_2000_2017_mm  ratio_grid_over_normal  flag_gt_25pct  in_panel
+  Kolhapur           1737.600                      Kolhapur                1102.000                   0.634           True      True
+    Sangli            508.100                        Sangli                 438.302                   0.863          False      True
+  Parbhani            796.285            Parbhani + Hingoli                 715.020                   0.898          False      True
+ Ratnagiri           3170.321        Ratnagiri + Sindhudurg                2848.445                   0.898          False     False
+ Osmanabad            684.280             Osmanabad + Latur                 618.197                   0.903          False      True
+    Nanded            816.400                        Nanded                 772.844                   0.947          False      True
+     Nasik            912.200                         Nasik                 894.487                   0.981          False     False
+Aurangabad            599.500            Aurangabad + Jalna                 588.866                   0.982          False     False
+     Akola            762.725                Akola + Washim                 752.044                   0.986          False      True
+   Solapur            474.200                       Solapur                 469.855                   0.991          False     False
+   Jalgaon            641.800                       Jalgaon                 638.252                   0.994          False     False
+  Bhandara           1190.917             Bhandara + Gondia                1191.802                   1.001          False     False
+Chandrapur           1227.852       Chandrapur + Gadchiroli                1246.906                   1.016          False      True
+    Wardha            880.300                        Wardha                 896.599                   1.019          False      True
+     Thane           2428.300                         Thane                2478.964                   1.021          False     False
+     Dhule            660.996             Dhule + Nandurbar                 675.280                   1.022          False     False
+    Raigad           3117.700                        Raigad                3204.968                   1.028          False     False
+   Yeotmal            855.000                       Yeotmal                 883.775                   1.034          False      True
+      Beed            569.400                          Beed                 595.396                   1.046          False      True
+ Amarawati            786.600                     Amarawati                 823.240                   1.047          False      True
+    Nagpur            923.900                        Nagpur                 992.260                   1.074          False      True
+  Buldhana            646.600                      Buldhana                 698.460                   1.080          False      True
+    Satara            723.800                        Satara                 786.176                   1.086          False     False
+    Bombay           2142.400 Mumbai City + Mumbai Suburban                2518.136                   1.175          False     False
+Ahmednagar            437.600                    Ahmednagar                 553.052                   1.264           True     False
+      Pune            861.000                          Pune                1136.536                   1.320           True     False
+Flagged (> 25% off): ['Ahmednagar', 'Kolhapur', 'Pune']; of which in the 13-district panel: ['Kolhapur']. Normal period is not stated in the file.
+table -> outputs/tables/validation_b_normals_comparison.csv
+
+(c) Plausibility
+Panel districts ordered by mean T_season (deg C):
+  district        subdivision  T_mean  T_min  T_max  Tmax_mean  Tmin_mean  R_mean  dry_spell_mean  dry_spell_max
+   Yeotmal           VIDARBHA   28.27  27.16  29.27      32.68      23.87  883.78           12.56             17
+Chandrapur           VIDARBHA   28.22  27.25  29.21      32.38      24.07 1246.91            9.39             19
+    Wardha           VIDARBHA   28.20  27.11  29.21      32.45      23.94  896.60           12.39             18
+    Nanded         MATATHWADA   27.88  26.80  28.82      32.41      23.34  772.84           13.50             22
+     Akola           VIDARBHA   27.73  26.51  28.70      32.25      23.20  752.04           14.94             25
+  Parbhani         MATATHWADA   27.67  26.58  28.60      32.26      23.09  715.02           14.44             21
+  Buldhana           VIDARBHA   27.67  26.46  28.59      32.23      23.11  698.46           15.72             27
+ Amarawati           VIDARBHA   27.61  26.46  28.55      31.95      23.28  823.24           14.78             24
+    Nagpur           VIDARBHA   27.60  26.59  28.61      31.73      23.46  992.26           11.28             18
+ Osmanabad         MATATHWADA   27.24  26.32  28.28      32.06      22.42  618.20           13.78             22
+      Beed         MATATHWADA   27.07  26.12  27.99      31.79      22.34  595.40           16.72             33
+  Kolhapur MADHYA MAHARASHTRA   25.97  25.37  26.68      29.30      22.65 1102.00           11.00             19
+    Sangli MADHYA MAHARASHTRA   25.69  25.06  26.42      29.58      21.80  438.30           18.06             36
+  T_season range (deg C): (np.float64(25.06159708429115), np.float64(29.270129699089104))
+  all Tmax_season > Tmin_season: True
+  dry_spell_max range (days): (5, 36)
+  R_season range (mm): (np.float64(198.4), np.float64(1855.5))
+  R_early + R_late == R_season: True
+Missing-cell diagnostics per old district (min valid area share over days; nearest-cell fallback days):
+  district  min_valid_area_share_rain_min  min_valid_area_share_tmax_min  min_valid_area_share_tmin_min  nearest_cell_days_rain_max  nearest_cell_days_tmax_max  nearest_cell_days_tmin_max
+Ahmednagar                          1.000                          1.000                          1.000                           0                           0                           0
+     Akola                          1.000                          1.000                          1.000                           0                           0                           0
+ Amarawati                          1.000                          1.000                          1.000                           0                           0                           0
+Aurangabad                          1.000                          1.000                          1.000                           0                           0                           0
+      Beed                          1.000                          1.000                          1.000                           0                           0                           0
+  Bhandara                          1.000                          1.000                          1.000                           0                           0                           0
+    Bombay                          1.000                          1.000                          1.000                           0                           0                           0
+  Buldhana                          1.000                          1.000                          1.000                           0                           0                           0
+Chandrapur                          1.000                          1.000                          1.000                           0                           0                           0
+     Dhule                          1.000                          1.000                          1.000                           0                           0                           0
+   Jalgaon                          1.000                          1.000                          1.000                           0                           0                           0
+  Kolhapur                          1.000                          1.000                          1.000                           0                           0                           0
+    Nagpur                          1.000                          1.000                          1.000                           0                           0                           0
+    Nanded                          1.000                          1.000                          1.000                           0                           0                           0
+     Nasik                          1.000                          1.000                          1.000                           0                           0                           0
+ Osmanabad                          1.000                          1.000                          1.000                           0                           0                           0
+  Parbhani                          1.000                          1.000                          1.000                           0                           0                           0
+      Pune                          1.000                          1.000                          1.000                           0                           0                           0
+    Raigad                          1.000                          1.000                          1.000                           0                           0                           0
+ Ratnagiri                          1.000                          1.000                          1.000                           0                           0                           0
+    Sangli                          1.000                          1.000                          1.000                           0                           0                           0
+    Satara                          1.000                          1.000                          1.000                           0                           0                           0
+   Solapur                          1.000                          1.000                          1.000                           0                           0                           0
+     Thane                          1.000                          1.000                          1.000                           0                           0                           0
+    Wardha                          1.000                          1.000                          1.000                           0                           0                           0
+   Yeotmal                          1.000                          1.000                          1.000                           0                           0                           0
+table -> outputs/tables/validation_c_plausibility_by_district.csv
+table -> outputs/tables/validation_c_missing_cells.csv
+figure -> outputs/figures/validation_c_map_rainfall.png
+figure -> outputs/figures/validation_c_map_temperature.png
+figure -> outputs/figures/validation_c_bars.png
+
+(d) Collinearity and independent rainfall signals (13 panel districts, 2000-2017)
+corr(R_season, T_season): pooled 0.062; within district -0.485
+VIF on district-demeaned data:
+     variable  within_R2_on_others   VIF                                      set
+     R_season                0.255 1.343                R_season, T_season, trend
+     T_season                0.308 1.446                R_season, T_season, trend
+        trend                0.096 1.106                R_season, T_season, trend
+     R_season                0.266 1.363 R_season, T_season, dry_spell_max, trend
+     T_season                0.333 1.498 R_season, T_season, dry_spell_max, trend
+dry_spell_max                0.155 1.183 R_season, T_season, dry_spell_max, trend
+        trend                0.184 1.226 R_season, T_season, dry_spell_max, trend
+Cross-district correlation of R_season: mean 0.540, min 0.036, max 0.935
+Eigenvalues: [7.72, 2.082, 1.095, 0.78, 0.437, 0.276, 0.246, 0.176, 0.089, 0.051, 0.029, 0.015, 0.003]
+Effective number of independent rainfall signals: participation ratio 2.56; components for 90% of variance: 5; first component share 0.594 (prototype panel_v1 had exactly 3 distinct series)
+table -> outputs/tables/validation_d_summary.csv
+table -> outputs/tables/validation_d_vif.csv
+table -> outputs/tables/validation_d_rainfall_correlation_matrix.csv
+table -> outputs/tables/validation_d_rainfall_eigenvalues.csv
+figure -> outputs/figures/validation_d_rainfall_correlation.png
+
+(e) Descriptive yield, 2000-2017
+ year  mean_yield_kgha  mean_R_season  mean_T_season
+ 2000           1225.8          802.7           26.9
+ 2001           1275.9          771.8           27.1
+ 2002           1332.5          767.5           27.4
+ 2003           1426.7          800.5           27.6
+ 2004            934.1          643.2           27.4
+ 2005           1062.0          919.0           27.6
+ 2006           1128.1          954.0           27.1
+ 2007           1496.0          981.1           27.3
+ 2008            752.2          695.7           27.3
+ 2009            781.7          588.1           28.3
+ 2010           1624.6         1034.9           27.8
+ 2011           1360.9          781.5           27.1
+ 2012           1582.7          807.3           27.4
+ 2013           1271.3         1078.9           26.4
+ 2014            605.6          662.8           28.2
+ 2015            591.7          641.0           28.1
+ 2016           1277.6          943.8           27.4
+ 2017           1118.2          713.0           27.6
+table -> outputs/tables/validation_e_by_year.csv
+figure -> outputs/figures/validation_e_yield.png
+VALIDATION of data/processed/panel_final.csv (IMD gridded data, DataMeet 2011 boundaries). Descriptive; no model.

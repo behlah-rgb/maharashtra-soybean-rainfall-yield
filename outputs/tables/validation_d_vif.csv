@@ -1,0 +1,9 @@
+# VALIDATION of data/processed/panel_final.csv (IMD gridded data, DataMeet 2011 boundaries). Descriptive; no model.
+variable,within_R2_on_others,VIF,set
+R_season,0.2552391033350919,1.3427128149155934,"R_season, T_season, trend"
+T_season,0.3083863244536297,1.4458939077657862,"R_season, T_season, trend"
+trend,0.09562249985081805,1.105732948724448,"R_season, T_season, trend"
+R_season,0.2664437164930391,1.363221912869772,"R_season, T_season, dry_spell_max, trend"
+T_season,0.3326629976295079,1.498493259699123,"R_season, T_season, dry_spell_max, trend"
+dry_spell_max,0.15483604470709678,1.1832023759856585,"R_season, T_season, dry_spell_max, trend"
+trend,0.1841979086130867,1.225787492527678,"R_season, T_season, dry_spell_max, trend"

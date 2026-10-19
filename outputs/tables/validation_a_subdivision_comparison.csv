@@ -1,0 +1,6 @@
+# VALIDATION of data/processed/panel_final.csv (IMD gridded data, DataMeet 2011 boundaries). Descriptive; no model.
+subdivision,n_years,corr,mean_grid_mm,mean_imd_mm,mean_ratio_grid_over_imd,old_districts,note
+KONKAN & GOA,16,0.7590972882212594,2750.4263801338134,2887.7124999999996,0.9524585221464442,"Bombay, Raigad, Ratnagiri, Thane",IMD subdivision includes Goa (not in the layer)
+MADHYA MAHARASHTRA,16,0.8841464603610661,741.3677664139034,801.4375,0.9250475132669777,"Ahmednagar, Dhule, Jalgaon, Kolhapur, Nasik, Pune, Sangli, Satara, Solapur",
+MATATHWADA,16,0.9639447306197214,634.4660151186235,622.10625,1.0198676112297915,"Aurangabad, Beed, Nanded, Osmanabad, Parbhani",
+VIDARBHA,16,0.9717732702140374,989.1276587236782,960.8875,1.0293896618737137,"Akola, Amarawati, Bhandara, Buldhana, Chandrapur, Nagpur, Wardha, Yeotmal",

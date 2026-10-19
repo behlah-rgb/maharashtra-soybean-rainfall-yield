@@ -1,0 +1,3 @@
+# VALIDATION of data/processed/panel_final.csv (IMD gridded data, DataMeet 2011 boundaries). Descriptive; no model.
+corr_pooled,corr_within,mean_cross_district_corr,participation_ratio,components_90pct
+0.06177279201693665,-0.4850691898529141,0.5402408568441596,2.5560442720070187,5

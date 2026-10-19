@@ -86,3 +86,34 @@ A10. **Crosswalk guard.** Old-to-new district pairs carry a status:
 - Robustness (src/09): drop Akola, Parbhani, Osmanabad and Chandrapur (the selected districts whose old boundaries include a later split).
 
 Also (team lead, 2026-10-19): keep the Pesaran CD test in src/07. src/03_eda.py takes a panel path and output folder with the same outputs/final guard.
+
+## Amendments 2026-10-19 (team lead, A11)
+
+A11.1 **Verdict scope and pre-specified headline rule (fixed before any gridded result).** The linear-vs-quadratic verdict uses district-, year- and two-way clustered SEs, the wild cluster bootstrap, Driscoll-Kraay and the moving-block bootstrap at L = 3. L = 2 and L = 4 are sensitivity only. If the verdict is INCONCLUSIVE, the headline 100 mm effect is the LINEAR model's (fewer parameters), the quadratic is reported beside it as sensitivity, and the report states the range across both. If QUADRATIC SUPPORTED, the quadratic is headline; if LINEAR ADEQUATE, the linear. This rule must not be changed after seeing results.
+
+A11.2 **Renames are aliases.** Dharashiv = Osmanabad, Chhatrapati Sambhajinagar = Aurangabad, Ahilyanagar = Ahmednagar: status ALIAS_NAME_ONLY (name change, same boundary). The guard never blocks on them. If a boundary layer uses the new names, map by alias and sanity-check each matched polygon (area, centroid) against the old-name polygon in the 2011 Census layer.
+
+A11.3 **Partur.** No taluka-level handling. Jalna stays wholly in Aurangabad. Limitation: old Parbhani loses Partur taluka. The drop-four-districts run (A10) covers boundary sensitivity.
+
+A11.4 **Washim -> Akola** set to CONFIRMED_OFFICIAL_PAGE (verified by the team lead from the Central Ground Water Board Washim document and the Akola district website history page: Washim carved from Akola on 1 July 1998). Its CAVEAT is removed. The Partur caveat for Jalna/Parbhani stays.
+
+A11.5 **Outputs.** outputs/prototype is the home of prototype outputs. Only outputs/final may feed the report.
+
+## Amendments 2026-10-19 (team lead, A12: weather data acquired by us; written before any weather value was computed)
+
+A12.1 **Context.** The teammate did not deliver data. We acquire the weather data ourselves, with no Copernicus account. Final panel: district-level rainfall and temperature for the 13 soybean districts, 2000-2017 (234 rows), plus the 17-district wider set for robustness (306 rows).
+
+A12.2 **Sources.** IMD gridded daily data via imdlib (`imdlib.load`, archive source): rainfall 0.25 deg (Pai et al. 2014), Tmax and Tmin 1.0 deg, 2000-2017, cached unchanged in data/raw/grids/imd/. Boundaries: DataMeet maps repository, Districts/Census_2011/2011_Dist (2011 Census districts; Maharashtra has 35), pinned to a commit. GADM level 2 only if DataMeet fails. Emergency fallback for temperature only: NASA POWER daily T2M_MAX/T2M_MIN at district centroids, ONLY with the user's approval. No other source may be substituted; if a download fails twice, stop. ERA5 is not used.
+
+A12.3 **Old districts.** Old ICRISAT district = union of current (2011) districts: Akola = Akola + Washim; Parbhani = Parbhani + Hingoli; Osmanabad = Osmanabad + Latur; Chandrapur = Chandrapur + Gadchiroli; Bhandara = Bhandara + Gondia; Dhule = Dhule + Nandurbar; Aurangabad = Aurangabad + Jalna; Thane = Thane (+ Palghar if present). The others map to themselves, allowing only listed spelling variants (Amravati/Amarawati, Yavatmal/Yeotmal, Nashik/Nasik, Ahmadnagar/Ahmednagar, plus the A11 aliases). Unmatched names stop the build. Stored in data/interim/old_to_current_districts.csv; dissolved polygons in data/interim/old_districts.gpkg. Limitations: Partur taluka (Jalna, from Parbhani) and Washim's parent area at taluka level.
+
+A12.4 **Spatial aggregation.** For each old district, the daily district value is the area-weighted mean over grid cells, with weight = area of overlap between the grid cell (a lon-lat box centred on the cell centre, in an equal-area projection) and the district polygon. This is the fractional-overlap method. Cells with missing values on a day are dropped and the weights renormalised over the valid cells. Because a 1.0 deg temperature cell is larger than many districts, fractional overlap uses every cell that touches the district, so no district is without cells. If a district has no valid overlapping cell on a day, the nearest valid cell centre is used and logged. The same method is used for rainfall and temperature.
+
+A12.5 **Variables** (district d, year t; season = 1 Jun to 30 Sep, 122 days):
+- R_season = sum over 1 Jun-30 Sep of daily district-mean rainfall (mm); R_early = 1 Jun-31 Jul; R_late = 1 Aug-30 Sep; R_julsep = 1 Jul-30 Sep (kept so the panel has the same columns as panel_v1).
+- dry_spell_max = longest run of consecutive days, within 1 Jun-30 Sep, with district-mean daily rainfall < 2.5 mm (days).
+- T_season = mean over 1 Jun-30 Sep of daily (Tmax + Tmin)/2 of the district means (deg C). District Tmax and Tmin are aggregated separately, then averaged.
+- ln_yield, yield_kgha, area_kha, prod_kt from data/processed/soy_clean.csv; trend = year - 2000; subdivision from the district map.
+- panel_final.csv: the panel_v1.csv columns plus dry_spell_max and T_season. Assert 13 x 18 = 234 rows, unique (district, year), no missing values.
+
+A12.6 **Validation (src/05b) before any model:** (a) gridded vs IMD subdivision R_season 2000-2015 (correlation, mean ratio); (b) old-district mean R_season vs area-weighted district normals (flag > 25%); (c) plausibility of T_season, units and missing cells; (d) corr(R_season, T_season), VIF, cross-district rainfall correlation and the effective number of independent rainfall signals; (e) descriptive yield vs R_season and yield by year including 2016-2017.
