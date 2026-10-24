@@ -218,3 +218,9 @@ Format for each entry:
 - Why: packaging for submission.
 - Result: 21 figures copied (6 validation figures come from outputs/figures, the other 15 from outputs/final/figures, as listed in REPORT_INPUTS.md).
 - Problems / deviations: the brief said "from outputs/final/figures"; the 6 src/05b validation figures listed in REPORT_INPUTS.md live in outputs/figures and were copied from there.
+
+## 2026-10-24 - Documentation edits (no code, data, output or specification content changed)
+- Done: (1) docs/SPEC.md: inserted a "Reading note (added 2026-10-19)" paragraph directly under the title line; nothing else changed. (2) Moved Part 10 (twenty exam questions) of docs/PROJECT_GUIDE.md word for word into the new file docs/VIVA_PREP.md, and left a one-line pointer under the Part 10 heading of the guide; the rest of the guide is unchanged.
+- Why: (1) SPEC's original body still describes the rainfall-only models and year-clustered SEs of 2026-10-18; the note tells a reader that the dated amendments (mainly A7, A12, A13, A14) govern the final results, and records that the team lead's second "A12" is SPEC's A13. (2) To keep the study guide focused on explanation and keep viva rehearsal material in a separate file.
+- Result: `git diff --stat src config.py run_all.sh` empty before and after. The moved text was checked identical to the original lines with diff.
+- Problems / deviations: none.

@@ -1,5 +1,7 @@
 # Specification of record
 
+Reading note (added 2026-10-19): the sections below are the original specification of 2026-10-18 (rainfall-only models, year-clustered standard errors as a stopgap). The specification used for the final results is that text as modified by the dated Amendments, mainly A7 (inference), A12 (weather data), A13 (headline models including temperature; the team lead labelled this set A12 and it is recorded here as A13) and A14. Where they differ, the later amendment governs.
+
 Written: 2026-10-18 (before any model was fitted). Changes need the user's approval and are appended below with a date.
 
 ## Data and period
